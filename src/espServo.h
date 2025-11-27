@@ -5,9 +5,7 @@ ServoModel servoG41(180, SERVO_FREQ, 500, 2500);
 ServoModel servoP1S(290, SERVO_FREQ, 500, 2500);  // 1s/4 = 250ms 250ms/2500us=100Hz
 ServoModel servoP1L(270, SERVO_FREQ, 500, 2500);
 ServoModel servoP50(120, SERVO_FREQ, 900, 2100);
-#ifdef BiBoard2
-#include "pcaServo.h"
-#endif
+
 
 #define P_STEP 32
 #define P_BASE 3000 + 3 * P_STEP  // 3000~3320
@@ -272,9 +270,6 @@ bool servoFollow() {
     for (byte j = 0; j < 4; j++)
       if (j != jointIdx % 4) {
         newCmd[(jointIdx / 4) * 4 + j] = currentAng[jointIdx]                      // >> leg
-#ifdef NYBBLE                                                                      // >< leg
-                                         * ((jointIdx % 4 / 2 == j / 2) ? 1 : -1)  //the front and back joints are symmetric
-#endif
           ;
       } else {
         newCmd[jointIdx] = currentAng[jointIdx];
@@ -322,11 +317,9 @@ void allRotate() {
   for (int pos = -50; pos < 50; pos += 1) {  // goes from 0 degrees to 180 degrees
     // in steps of 1 degree
     for (int s = 0; s < PWM_NUM; s++) {
-#ifdef ESP_PWM
+
       servo[s].write(pos);  // tell servo to go to position in variable 'pos'
-#else                       // BiBoard2
-      pwm.writeAngle(s, pos);
-#endif
+
       delay(1);  // waits 15ms for the servo to reach the position
       Serial.println(pos);
     }
@@ -334,11 +327,9 @@ void allRotate() {
   for (int pos = 50; pos > -50; pos -= 1) {  // goes from 0 degrees to 180 degrees
     // in steps of 1 degree
     for (int s = 0; s < PWM_NUM; s++) {
-#ifdef ESP_PWM
+
       servo[s].write(pos);  // tell servo to go to position in variable 'pos'
-#else                       // BiBoard2
-      pwm.writeAngle(s, pos);  // may go out of range. check!
-#endif
+
       delay(1);  // waits 15ms for the servo to reach the position
       Serial.println(pos);
     }
@@ -349,11 +340,9 @@ void allRotate() {
 
 void allRotateWithIMU() {
   for (int s = 0; s < PWM_NUM; s++) {
-#ifdef ESP_PWM
+
     servo[s].write(90 + ypr[1] + ypr[2]);  // tell servo to go to position in variable 'pos'
-#else                                      // BiBoard2
-    pwm.writeAngle(s, 90 + ypr[1] + ypr[2]);
-#endif
+
     //    delay(1);             // waits 15ms for the servo to reach the position
     Serial.print(ypr[1]);
     Serial.print('\t');

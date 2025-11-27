@@ -1,7 +1,3 @@
-#ifdef ROBOT_ARM
-bool pincerClosedQ = true;
-#endif
-
 void calibratedPWM(byte i, float angle, float speedRatio = 0) {
   if (PWM_NUM == 12 && WALKING_DOF == 8 && i > 3 && i < 8)  // there's no such joint in this configuration
     return;
@@ -10,10 +6,6 @@ void calibratedPWM(byte i, float angle, float speedRatio = 0) {
   int duty0 = calibratedZeroPosition[i] + currentAng[i] * rotationDirection[i];
   previousAng[i] = currentAng[i];
   currentAng[i] = angle;
-  // #ifdef ROBOT_ARM
-  //   if (actualServoIndex == 2 && currentAng[2] == 0 && pincerClosedQ)
-  //     return;
-  // #endif
   int duty = calibratedZeroPosition[i] + angle * rotationDirection[i];
   int steps = speedRatio > 0 ? int(round(abs(duty - duty0) / 1.0 /*degreeStep*/ / speedRatio)) : 0;
   // if default speed is 0, no interpolation will be used
@@ -21,9 +13,6 @@ void calibratedPWM(byte i, float angle, float speedRatio = 0) {
 
   for (int s = 0; s <= steps; s++) {
     int degree = duty + (steps == 0 ? 0 : (1 + cos(M_PI * s / steps)) / 2 * (duty0 - duty));
-#ifdef VOLTAGE
-    if (!lowBatteryQ)
-#endif
     {
 #ifdef ESP_PWM
       servo[actualServoIndex].write(degree);
@@ -33,12 +22,6 @@ void calibratedPWM(byte i, float angle, float speedRatio = 0) {
     }
     //    delayMicroseconds(1);
   }
-  // #ifdef ROBOT_ARM
-  //   if (actualServoIndex == 2 && currentAng[2] == 0 && !pincerClosedQ) {
-  //     shutServos(2);  //release the power on the pincer to avoid stuck
-  //     pincerClosedQ = true;
-  //   }
-  // #endif
 }
 
 void allCalibratedPWM(int *dutyAng, byte offset = 0) {
@@ -205,57 +188,6 @@ void transform(T *target, byte angleDataRatio = 1, float speedRatio = 1, byte of
     delete[] diff;
   }
 }
-
-// #define WEIGHT 2
-// template <typename T> void transform( T * target, byte angleDataRatio = 1, float speedRatio = 2, byte offset = 0) {  // transformCubic
-//   {
-
-//     int maxDiff = 0;
-//     T *nextFrame = target + DOF - offset;
-//     //svel: vel at the starting point of the interpolation.   evel: vel at the ending point.
-//     int *svel = new int [DOF - offset];
-//     int *evel = new int [DOF - offset];
-//     int *cAng_cp = new int [DOF];
-//     arrayNCPY(cAng_cp, currentAng, DOF);
-//     for (byte i = offset; i < DOF; i++) {
-//         if (WALKING_DOF == 8 && i > 3 && i < 8)
-//         continue;
-//         if (WALKING_DOF == 12 && i < 4)
-//         continue;
-//       maxDiff = max(maxDiff, abs( currentAng[i] - target[i - offset] * angleDataRatio));
-//       svel[i - offset] = (currentAng[i] - previousAng[i])/WEIGHT;
-//       evel[i - offset] = ((offset != 0) ? nextFrame[i - offset] * angleDataRatio - target[i - offset] * angleDataRatio : 0)/WEIGHT;
-//     }
-// //    printList(currentAng);
-// //    PTL();
-//     int steps = int(round(maxDiff / speedRatio )); //default speed is 1 degree per step
-//     //int steps = (offset!=0) ? 10:20;// interpolation points
-
-//     for (int s = 0; s < steps; s++) {
-//       for (int j = offset; j < DOF; j++) {
-
-//             if (WALKING_DOF == 8 && j > 3 && j < 8)
-//             continue;
-//             if (WALKING_DOF == 12 && j < 4)
-//             continue;
-
-//         ///////////////interpolation///////////////
-//         float A = (float)(svel[j - offset] + evel[j - offset])  / pow(steps, 2) - 2 * (target[j - offset] * angleDataRatio - cAng_cp[j]) / pow(steps, 3);
-//         float B = (float)(-2 * svel[j - offset]  - evel[j - offset] ) / steps + 3 * (target[j - offset] * angleDataRatio - cAng_cp[j]) / pow(steps, 2);
-//         float dutyAng = A * pow(s, 3) + B * pow(s, 2) + svel[j - offset]  * s + cAng_cp[j];
-
-//         calibratedPWM (j, dutyAng);
-//         delayMicroseconds(500);
-//       }
-// //      PTL();
-//     }
-// //    PTL();
-// //    printList(target);
-//     delete [] svel;
-//     delete [] evel;
-//     delete [] cAng_cp;
-//   }
-// }
 
 // balancing parameters
 #define ROLL_LEVEL_TOLERANCE 5  // the body is still considered as level, no angle adjustment
@@ -588,29 +520,14 @@ void updateCPG() {
 }
 int calibrationReference[] = {
 // the angle difference between P1L and P1S is significant for auto calibration.
-#ifdef NYBBLE  // with plastic servo P1L
-  0, 42, 0, 0, 0, 0, 0, 0,
-  72, 72, -68, -68, -63, -63, 63, 63
-#elif defined ROBOT_ARM  //  Bittle R with metal servo P1S
-  0, 55, 0, 0, 0, 0, 0, 0,
-  65, 65, 77, 77, -63, -63, -63, -63
-#else                    // Bittle with plastic servo P1L
   0, 0, 0, 0, 0, 0, 0, 0,
   73, 73, 76, 76, -66, -66, -66, -66
-#endif
+
 };
 
 // int calibrationReference2[] = {
-// #ifdef NYBBLE  //with plastic servo P1L
-//   0, 42, 0, 0, 0, 0, 0, 0,
-//   72, 72, -68, -68, -63, -63, 63, 63
-// #elif defined ROBOT_ARM  //  Bittle R with metal servo P1S
-//   0, 50, 0, 0, 0, 0, 0, 0,
-//   -85, -85, -70, -70,83, 83, 83, 83
-// #else                    //Bittle with plastic servo P1L
 //   0, 0, 0, 0, 0, 0, 0, 0,
 //   73, 73, 76, 76, -66, -66, -66, -66
-// #endif
 // };
 void autoCalibrate() {
   // PTLF("Auto calibration reference:");

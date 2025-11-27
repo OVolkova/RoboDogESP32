@@ -245,11 +245,6 @@ public:
       for (byte i = 0; i < 3; i++) {  // no need to flip yaw
         ypr[i] *= degPerRad;
         a_real[i] = *xyzReal[i] / 8192.0 * GRAVITY;
-#ifdef BiBoard_V0_1  // # rotate 180 degree
-        ypr[i] = -ypr[i];
-        if (i != 2)
-          a_real[i] = -a_real[i];
-#endif
       }
       return true;
     }
@@ -279,13 +274,8 @@ public:
     do {
       // initialize device
       PTLF("\nInitializing MPU6050...");
-#if defined CONFIG_DISABLE_HAL_LOCKS && CONFIG_DISABLE_HAL_LOCKS == 1
-      PTL("OK");
-      PTL("If the program stucks, reinstall Arduino ESP32 boards version 2.0.12. Newer version may cause bugs!");
-#else
       PTL("If the program stucks, modify the header file:\n  "
           "https://docs.petoi.com/arduino-ide/upload-sketch-for-biboard#sdkconfig.h");
-#endif
       initialize();
       // pinMode(INTERRUPT_PIN, INPUT);
       // verify connection

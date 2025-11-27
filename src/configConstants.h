@@ -494,15 +494,7 @@ The five boxing wizards jump quickly. Pack my box with five dozen liquor jugs.";
 // char data[]={16,-3,5,7,9};
 
 void genBleID(int suffixDigits = 2) {
-  const char *prefix =
-#ifdef BITTLE
-      "Bittle"
-#elif defined NYBBLE
-      "Nybble"
-#else
-      "Cub"
-#endif
-      ;
+  const char *prefix ="Bittle" ;
   int prelen = strlen(prefix);
 
   char *id = new char[prelen + suffixDigits + 1];
@@ -576,7 +568,7 @@ void configSetup() {
     char tempStr[12];
     strcpy(tempStr, SoftwareVersion.c_str());
     soundState = 1;
-    buzzerVolume = 5;
+    buzzerVolume = 2;
     PTLF("Unmute and set volume to 5/10");
 
     int bufferLen = dataLen(rest[0]);  // save a preset skill to the temp skill
@@ -616,29 +608,21 @@ void configSetup() {
     config.putBytes("tmp", (int8_t *)newCmd, bufferLen);
     config.putBool("WifiManager", rebootForWifiManagerQ);  // default is false
 #endif
-#ifndef AUTO_INIT
-#ifdef VOLTAGE
-    if (!lowBatteryQ)  // won't play sound if only powered by USB. It avoid noise when developing codes
-#endif
-      playMelody(melodyInit, sizeof(melodyInit) / 2);
-#endif
-#ifndef AUTO_INIT
+
+    playMelody(melodyNormalBoot, sizeof(melodyNormalBoot) / 2);
     PTL("- Reset the joints' calibration offsets? (Y/n): ");
     char choice = getUserInputChar();
     PTL(choice);
     if (choice == 'Y' || choice == 'y') {
-#else
-    PTL("- Reset the joints' calibration offsets...");
-#endif
+
 #ifdef I2C_EEPROM_ADDRESS
       for (byte c = 0; c < DOF; c++)
         i2c_eeprom_write_byte(EEPROM_CALIB + c, 0);
 #else
     config.putBytes("calib", servoCalib, DOF);
 #endif
-#ifndef AUTO_INIT
     }
-#endif
+
   } else {
     resetIfVersionOlderThan(SoftwareVersion);
 #ifdef I2C_EEPROM_ADDRESS
@@ -654,15 +638,7 @@ void configSetup() {
       delete[] temp;
     } else {
       // EEPROM data is invalid, generate a new ID following normal naming rules
-      const char *prefix =
-#ifdef BITTLE
-          "Bittle"
-#elif defined NYBBLE
-          "Nybble"
-#else
-          "Cub"
-#endif
-          ;
+      const char *prefix = "Bittle";
       int prelen = strlen(prefix);
       int suffixDigits = 2;
 
