@@ -1,17 +1,5 @@
 // modify the model and board definitions
 //***********************
-#define BITTLE  // Petoi 9 DOF robot dog: 1 on head + 8 on leg
-// #define NYBBLE  // Petoi 11 DOF robot cat: 2 on head + 1 on tail + 8 on leg
-// #define VT
-// #define CUB
-// #define MINI
-
-
-// #define BiBoard_V0_1  //ESP32 Board with 12 channels of built-in PWM for joints
-#define BiBoard_V0_2
-// #define BiBoard_V1_0
-// #define BiBoard2  //ESP32 Board with 16 channels of PCA9685 PWM for joints
-//***********************
 
 // Send '!' token to reset the birthmark in the EEPROM so that the robot will restart to reset
 // #define AUTO_INIT  //activate it to automatically reset joint and imu calibration without prompts
@@ -19,11 +7,6 @@
 // you can also activate the following modes by the 'X' token defined in src/OpenCat.h
 #define VOICE                     // Petoi Grove voice module
 #define PIR                       // for PIR (Passive Infrared) sensor
-// #define DOUBLE_TOUCH              // for double touch sensor
-// #define DOUBLE_LIGHT              // for double light sensor
-// #define DOUBLE_INFRARED_DISTANCE  // for double distance sensor
-// #define GESTURE                   // for Gesture module
-// #define CAMERA                    // for Mu Vision camera
 #define QUICK_DEMO                // for quick demo
 
 #include "src/RoboDog.h"
@@ -39,15 +22,7 @@ void setup() {
 }
 
 void loop() {
-#ifdef VOLTAGE
-  lowBattery();
-#endif
-  //  //—self-initiative
-  //  if (autoSwitch) { //the switch can be toggled on/off by the 'z' token
-  //    randomMind();//allow the robot to auto rest and do random stuff in randomMind.h
-  //    powerSaver(POWER_SAVER);//make the robot rest after a certain period, the unit is seconds
-  //
-  //  }
+
   //  //— read environment sensors (low level)
   readEnvironment();  // update the gyro data
   //  //— special behaviors based on sensor events
@@ -67,9 +42,6 @@ void loop() {
 
    //— action
    // playSound();
-#ifdef NEOPIXEL_PIN
-  playLight();
-#endif
   reaction();
 
 #ifdef WEB_SERVER

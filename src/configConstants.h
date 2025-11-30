@@ -72,11 +72,7 @@ void i2cDetect(TwoWire &wirePort) {
   int nDevices;
   int8_t i2cAddress[] = {0x39, 0x50, 0x54, 0x60, 0x62, 0x68, 0x69};
   String i2cAddressName[] = {"APDS9960 Gesture", "Mu3 CameraP", "EEPROM",
-#ifdef SENTRY2_CAMERA
-                             "Sentry2 Camera",
-#else
                              "Mu3 Camera",
-#endif
                              "AI Vision",        "MPU6050",     "ICM42670"};
   Serial.println("Scanning I2C network...");
   nDevices = 0;
@@ -100,11 +96,7 @@ void i2cDetect(TwoWire &wirePort) {
           else if (i == 2)
             eepromQ = true;
           else if (i == 3)
-#ifdef SENTRY2_CAMERA
-            Sentry2Q = true;
-#else
             MuQ = true;  // The older Mu3 Camera and Sentry1 share the same address. Sentry is not supported yet.
-#endif
           else if (i == 4)
             GroveVisionQ = true;
 #ifdef IMU_MPU6050
@@ -141,17 +133,13 @@ void i2cDetect(TwoWire &wirePort) {
   if (&wirePort == &Wire1)
     wirePort.end();
   PTHL("GroveVisionQ", GroveVisionQ);
-#ifdef SENTRY2_CAMERA
-  PTHL("Sentry2Q", Sentry2Q);
-#else
   PTHL("MuQ", MuQ);
-#endif
 }
 
 #ifdef I2C_EEPROM_ADDRESS
 void i2c_eeprom_write_byte(unsigned int eeaddress, byte data) {
   // wait for other I2C devices to release the bus
-  while (imuLockI2c || gestureLockI2c)
+  while (imuLockI2c)
     delay(1);
   eepromLockI2c = true;  // lock I2C bus for EEPROM operations
   
@@ -168,7 +156,7 @@ void i2c_eeprom_write_byte(unsigned int eeaddress, byte data) {
 
 byte i2c_eeprom_read_byte(unsigned int eeaddress) {
   // wait for other I2C devices to release the bus
-  while (imuLockI2c || gestureLockI2c)
+  while (imuLockI2c)
     delay(1);
   eepromLockI2c = true;  // lock I2C bus for EEPROM operations
   
@@ -188,7 +176,7 @@ byte i2c_eeprom_read_byte(unsigned int eeaddress) {
 // This function will write a 2-byte integer to the EEPROM at the specified address and address + 1
 void i2c_eeprom_write_int16(unsigned int eeaddress, int16_t p_value) {
   // wait for other I2C devices to release the bus
-  while (imuLockI2c || gestureLockI2c)
+  while (imuLockI2c)
     delay(1);
   eepromLockI2c = true;  // lock I2C bus for EEPROM operations
   
@@ -211,7 +199,7 @@ void i2c_eeprom_write_int16(unsigned int eeaddress, int16_t p_value) {
 // This function will read a 2-byte integer from the EEPROM at the specified address and address + 1
 int16_t i2c_eeprom_read_int16(unsigned int eeaddress) {
   // wait for other I2C devices to release the bus
-  while (imuLockI2c || gestureLockI2c)
+  while (imuLockI2c)
     delay(1);
   eepromLockI2c = true;  // lock I2C bus for EEPROM operations
   
@@ -230,7 +218,7 @@ int16_t i2c_eeprom_read_int16(unsigned int eeaddress) {
 // This function will write a 4-byte float to the EEPROM at the specified address
 void i2c_eeprom_write_float(unsigned int eeaddress, float value) {
   // wait for other I2C devices to release the bus
-  while (imuLockI2c || gestureLockI2c)
+  while (imuLockI2c)
     delay(1);
   eepromLockI2c = true;  // lock I2C bus for EEPROM operations
   
@@ -255,7 +243,7 @@ void i2c_eeprom_write_float(unsigned int eeaddress, float value) {
 // This function will read a 4-byte float from the EEPROM at the specified address
 float i2c_eeprom_read_float(unsigned int eeaddress) {
   // wait for other I2C devices to release the bus
-  while (imuLockI2c || gestureLockI2c)
+  while (imuLockI2c)
     delay(1);
   eepromLockI2c = true;  // lock I2C bus for EEPROM operations
   
@@ -466,7 +454,7 @@ bool newBoardQ(unsigned int eeaddress = EEPROM_BIRTHMARK_ADDRESS) {
 // PTHL("birthmark:", char(i2c_eeprom_read_byte(eeaddress)));
 #ifdef I2C_EEPROM_ADDRESS
   // Use I2C lock to protect BIRTHMARK reading, avoid conflicts with other I2C operations
-  while (imuLockI2c || gestureLockI2c) delay(1);
+  while (imuLockI2c) delay(1);
   eepromLockI2c = true;
   byte birthmarkValue = i2c_eeprom_read_byte(eeaddress);
   eepromLockI2c = false;
@@ -494,15 +482,7 @@ The five boxing wizards jump quickly. Pack my box with five dozen liquor jugs.";
 // char data[]={16,-3,5,7,9};
 
 void genBleID(int suffixDigits = 2) {
-  const char *prefix =
-#ifdef BITTLE
-      "Bittle"
-#elif defined NYBBLE
-      "Nybble"
-#else
-      "Cub"
-#endif
-      ;
+  const char *prefix ="Bittle" ;
   int prelen = strlen(prefix);
 
   char *id = new char[prelen + suffixDigits + 1];
@@ -617,9 +597,6 @@ void configSetup() {
     config.putBool("WifiManager", rebootForWifiManagerQ);  // default is false
 #endif
 #ifndef AUTO_INIT
-#ifdef VOLTAGE
-    if (!lowBatteryQ)  // won't play sound if only powered by USB. It avoid noise when developing codes
-#endif
       // playMelody(melodyInit, sizeof(melodyInit) / 2);
 #endif
 #ifndef AUTO_INIT
@@ -654,15 +631,7 @@ void configSetup() {
       delete[] temp;
     } else {
       // EEPROM data is invalid, generate a new ID following normal naming rules
-      const char *prefix =
-#ifdef BITTLE
-          "Bittle"
-#elif defined NYBBLE
-          "Nybble"
-#else
-          "Cub"
-#endif
-          ;
+      const char *prefix = "Bittle";
       int prelen = strlen(prefix);
       int suffixDigits = 2;
 
@@ -706,9 +675,7 @@ void configSetup() {
                                                               // namespace is opened.
 #endif
     PTHL("Default language: ", defaultLan == 'b' ? " Chinese" : " English");
-#ifdef VOLTAGE
-    if (!lowBatteryQ)  // won't play sound if only powered by USB. It avoid noise when developing codes
-#endif
+
       // playMelody(melodyNormalBoot, sizeof(melodyNormalBoot) / 2);
   }
 }

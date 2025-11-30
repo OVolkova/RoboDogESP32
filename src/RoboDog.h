@@ -49,33 +49,18 @@
     System default, nothing to declare!
 */
 
-/* BiBoard2
-  IMU_Int     27
-  BUZZER      14
-  VOLTAGE     4
-  RGB LED     15
-  GREEN-LED   5
-*/
-
-/*  Total DOF            Walking DOF
-                   Nybble    Bittle    Cub
-   BiBoard  (12)  skip 0~4  skip 0~4    12
-   BiBoard2 (16)  skip 0~8  skip 0~8  skip0~4
+/*  Total DOF      Walking DOF
+                    Bittle  
+   BiBoard  (12)    skip 0~4    
 */
 
 // #define RevB
 #define RevDE
 #define SERIAL_TIMEOUT 10  // 5 may cut off the message
 #define SERIAL_TIMEOUT_LONG 200
-#ifdef BiBoard_V0_1
-#define BOARD "B01"
-#elif defined BiBoard_V0_2
+
 #define BOARD "B02"
-#elif defined BiBoard_V1_0
-#define BOARD "B10"
-#else
-#define BOARD "B"
-#endif
+
 
 #define DATE "251121"  // YYMMDD
 String SoftwareVersion = "";
@@ -91,22 +76,11 @@ String uniqueName = "";
 // #define WIFI_MANAGER  // toggle WiFi Manager. It should be always off for now
 #define WEB_SERVER // toggle web server
 // #define SHOW_FPS // toggle FPS display
-#ifndef VT
 #define GYRO_PIN  // toggle the Inertia Measurement Unit (IMU), i.e. the gyroscope
-#endif
 #define SERVO_FREQ 240
 
 // Tutorial: https://bittle.petoi.com/11-tutorial-on-creating-new-skills
-#ifdef NYBBLE
-#define MODEL "Nybble Q"
-#define HEAD
-#define TAIL
-#define X_LEG
-#define REGULAR P1L  // G41
-#define KNEE P1L     // G41
-#include "InstinctNybbleESP.h"
 
-#elif defined BITTLE
 #define MODEL "Bittle X"
 #include "InstinctBittleESP.h"
 #define REGULAR P1L
@@ -117,20 +91,7 @@ String uniqueName = "";
 #define TAIL  // the robot arm's clip is assigned to the tail joint
 #define LL_LEG
 
-#elif defined CUB
-#define MODEL "DoF16"
-#ifdef BiBoard2
-#define HEAD
-#define TAIL
-#endif
-#define LL_LEG
-#define REGULAR P1S
-#define KNEE P2K
-#include "InstinctCubESP.h"
 
-#endif
-
-#if defined BiBoard_V0_1 || defined BiBoard_V0_2
 #define ESP_PWM
 #define PWM_NUM 12
 #define INTERRUPT_PIN 26  // use pin 2 on Arduino Uno & most boards
@@ -151,98 +112,20 @@ String uniqueName = "";
 
 // L:Left-R:Right-F:Front-B:Back---LF, RF, RB, LB
 const uint8_t PWM_pin[PWM_NUM] = {
-#ifdef BITTLE
     19, 2,  4,  27,  // head or shoulder roll
-#elif defined NYBBLE
-    19, 4,  2,  27,  // head or shoulder roll
-#endif
     33, 5,  15, 14,  // shoulder pitch
     32, 18, 13, 12  // knee
 };
-
-#elif defined BiBoard_V1_0
-#define ESP_PWM
-#define PWM_NUM 12
-// #define INTERRUPT_PIN 26  // use pin 2 on Arduino Uno & most boards
-#define BUZZER 2
-#define BT_CLIENT  // toggle Bluetooth client (BLE） for Micro:Bit
-// #define IR_PIN 23
-
-#define LOW_VOLTAGE 7.0  // for 2S 7.4V power
-#define NO_BATTERY_VOLTAGE 6.8
-#define LOW_VOLTAGE2 5.0  // for 6V power
-#define NO_BATTERY_VOLTAGE2 4.8
-#ifdef RevB
-#define VOLTAGE 35  // rev B
-#define ANALOG2 32  // rev B
-#elif defined RevDE
-#define VOLTAGE 37  // rev D
-#define ANALOG2 35  // rev D
-#endif
-#define ANALOG1 34
-#define ANALOG3 36
-#define ANALOG4 39
-#define BACKTOUCH_PIN 38
-#define VOICE_RX 26
-#define VOICE_TX 25
-#define UART_RX2 9
-#define UART_TX2 10
-#define SERIAL_VOICE Serial1
-#define IMU_MPU6050
-#define IMU_ICM42670
-
-#define PWM_LED_PIN 27
-
-// L:Left-R:Right-F:Front-B:Back---LF, RF, RB, LB
-const uint8_t PWM_pin[PWM_NUM] = {
-#ifdef BITTLE
-    18, 14, 5,  27,  // head or shoulder roll
-#elif defined NYBBLE
-    18, 5,  14, 27,  // head or shoulder roll
-#endif
-    23, 4,  12, 33,  // shoulder pitch
-    19, 15, 13, 32  // knee
-};
-
-#elif defined BiBoard2
-#define PWM_NUM 16
-#define INTERRUPT_PIN 27  // use pin 2 on Arduino Uno & most boards
-#define BUZZER 14
-#define VOLTAGE 4
-#define LOW_VOLTAGE 7.0
-#define NEOPIXEL_PIN 15
-#define PWM_LED_PIN 5
-#define IR_PIN 23
-#define TOUCH0 12
-#define TOUCH1 13
-#define TOUCH2 32
-#define TOUCH3 33
-#define IMU_MPU6050
-// L:Left R:Right F:Front B:Back   LF,        RF,    RB,   LB
-
-const uint8_t PWM_pin[PWM_NUM] = {
-    12, 11, 4, 3,  //                                headPan, tilt, tailPan, NA
-    13, 10, 5, 2,  // shoulder roll
-    14, 9, 6, 1,   // shoulder pitch
-  //                                  13,       10,     6,    2,     //shoulder roll
-  //                                  14,        9,     5,    1,     //shoulder pitch
-    15, 8, 7, 0  // knee
-};
-
-#endif
 
 #define MAX_READING 4096.0  // to compensate the different voltage level of boards
 #define BASE_RANGE 1024.0
 double rate = 1.0 * MAX_READING / BASE_RANGE;
 
 #define DOF 16
-#if defined NYBBLE || defined BITTLE
+
 #define WALKING_DOF 8
 #define GAIT_ARRAY_DOF 8
-#else  // CUB
-#define WALKING_DOF 12
-#define GAIT_ARRAY_DOF 8
-#endif
+
 
 enum ServoModel_t {
   G41 = 0,
@@ -335,7 +218,6 @@ bool newBoard = false;
 #define T_CPG 'r'      //Oscillator for Central Pattern Generator (ASCII)
 #define T_CPG_BIN 'Q'  //Oscillator for Central Pattern Generator (Binary)
 #define T_PAUSE 'p'  // pause
-#define T_POWER 'P'  // power, print the voltage
 #define T_TASK_QUEUE 'q'
 #define T_SAVE 's'
 #define T_TILT 't'
@@ -345,7 +227,6 @@ bool newBoard = false;
 #define T_WIFI_INFO 'w'
 // #define T_XLEG 'x'
 #define T_LEARN 'x'
-#define T_RANDOM_MIND 'z'  // toggle random behaviors
 
 #define T_READ 'R'  // read pin     R
 #define T_WRITE 'W'  // write pin                      W
@@ -363,18 +244,8 @@ bool newBoard = false;
 #define EXTENSION_VOICE \
   'A'  // connect to Grove UART2 (on V0_*: a slide switch can choose the voice or the Grove), or UART1 (on V1). Hidden
        // on board.
-#define EXTENSION_DOUBLE_TOUCH 'T'  // connect to ANALOG1, ANALOG2
-#define EXTENSION_DOUBLE_LIGHT 'L'  // connect to ANALOG1, ANALOG2
-#define EXTENSION_DOUBLE_IR_DISTANCE 'D'  // connect to ANALOG3, ANALOG4
 #define EXTENSION_PIR 'I'  // connect to ANALOG3
-#define EXTENSION_GESTURE 'G'  // connect to Grove I2C
-#define EXTENSION_CAMERA 'C'  // connect to Grove I2C
 #define EXTENSION_QUICK_DEMO 'Q'  // activate the quick demo at the end of OpenCatEsp32.ino
-
-#define T_CAMERA_PRINT 'P'
-#define T_CAMERA_PRINT_OFF 'p'
-#define T_CAMERA_REACTION 'R'
-#define T_CAMERA_REACTION_OFF 'r'
 
 #define IMU_EXCEPTION_FLIPPED -1
 #define IMU_EXCEPTION_LIFTED -2
@@ -427,10 +298,6 @@ char terminator;
 long lastSerialTime = 0;
 String webResponse = "";
 
-#ifdef CAMERA
-// #define SENTRY2_CAMERA //This macro must be manually turned on if a Sentry2 is connected
-#endif
-
 /*  These "Q" booleans are conditions that are checked to activate or deactivate different states.
     A condition set to true activates (turns on) a state.
 */
@@ -456,9 +323,7 @@ bool cmdFromWeb = false;
 bool interruptedDuringBehavior = false;
 bool autoSwitch = false;
 bool workingStiffness = true;
-bool cameraLockI2c = false;
 bool imuLockI2c = false;
-bool gestureLockI2c = false;
 bool eepromLockI2c = false;
 
 #define HEAD_GROUP_LEN 4  // used for controlling head pan, tilt, tail, and other joints independent from walking
@@ -475,22 +340,12 @@ float protectiveShift;  // reduce the wearing of the potentiometer
 int8_t moduleList[] = {
     EXTENSION_GROVE_SERIAL,
     EXTENSION_VOICE,
-    EXTENSION_DOUBLE_TOUCH,
-    EXTENSION_DOUBLE_LIGHT,
-    EXTENSION_DOUBLE_IR_DISTANCE,
     EXTENSION_PIR,
-    EXTENSION_GESTURE,
-    EXTENSION_CAMERA,
     EXTENSION_QUICK_DEMO,
 };
 
-String moduleNames[] = {"Grove_Serial", "Voice",      "Double_Touch", "Double_Light ", "Double_IR_Distance ", "PIR",
-                        "Gesture",      "Camera",        "Quick_Demo"};
-#ifdef NYBBLE
-bool moduleActivatedQ[] = {0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0};
-#else
+String moduleNames[] = {"Grove_Serial", "Voice", "PIR", "Quick_Demo"};
 bool moduleActivatedQ[] = {0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0};
-#endif
 bool moduleDemoQ = false;
 int8_t moduleIndex;
 bool icmQ = false;
@@ -515,35 +370,16 @@ int delayStep = 1;
 int delayPrevious;
 int runDelay = delayMid;
 
-#ifdef NYBBLE
-int8_t middleShift[] = {0, 15, 0, 0, -45, -45, -45, -45, 10, 10, -10, -10, -30, -30, 30, 30};
-#elif defined BITTLE
-#ifndef MINI
 int8_t middleShift[] = { 0, -90, 0, 0,
                          -45, -45, -45, -45,
                          55, 55, -55, -55,
                          -55, -55, -55, -55 };
-#else
-int8_t middleShift[] = { 0, 0, 0, 0,
-                         0, 0, 0, 0,
-                         0, 0, 0, 0,
-                         -15, -15, -15, -15 };
-#endif
 
-#else  // CUB
-int8_t middleShift[] = {0, 15, 0, 0, -45, -45, -45, -45, 55, 55, -55, -55, -45, -45, -45, -45};
-#endif
 
 // #define INVERSE_SERVO_DIRECTION
-#ifdef CUB
-int8_t rotationDirection[] = {1, -1, 1, 1, 1, -1, 1, -1, 1, -1, -1, 1, 1, -1, -1, 1};
-int angleLimit[][2] = {
-    {-120, 120}, {-30, 80},   {-120, 120}, {-120, 120}, {-90, 60},  {-90, 60},  {-90, 90},  {-90, 90},
-    {-180, 120}, {-180, 120}, {-80, 200},  {-80, 200},  {-66, 100}, {-66, 100}, {-66, 100}, {-66, 100},
-};
-#else
+
 int8_t rotationDirection[] = {1, -1, -1, 1, 1, -1, 1, -1, 1, -1, -1, 1, -1, 1, 1, -1};
-#ifdef BITTLE
+
 int angleLimit[][2] = {
     {-120, 120},
     {-85, 85},
@@ -553,13 +389,7 @@ int angleLimit[][2] = {
 
     {-200, 80},  {-200, 80},  {-80, 200}, {-80, 200}, {-80, 200}, {-80, 200}, {-80, 200}, {-80, 200},
 };
-#else  // Nybble
-int angleLimit[][2] = {
-    {-120, 120}, {-75, 35},  {-120, 120}, {-120, 120}, {-90, 60}, {-90, 60}, {-90, 90}, {-90, 90},
-    {-200, 80},  {-200, 80}, {-80, 200},  {-80, 200},  {-80, 80}, {-80, 80}, {-80, 80}, {-80, 80},
-};
-#endif
-#endif
+
 
 #ifdef X_LEG
 int currentAng[DOF] = {0, 0, 0, 0, 0, 0, 0, 0, 75, 75, -75, -75, -55, -55, 55, 55};
@@ -604,28 +434,18 @@ int balanceSlope[2] = {1, 1};  // roll, pitch
 #endif
 #include "espServo.h"
 #include "motion.h"
-#include "randomMind.h"
 #include "skill.h"
 #include "moduleManager.h"
 #ifdef WEB_SERVER
 #include "webServer.h"
 #endif
-#ifdef NEOPIXEL_PIN
-#include "led.h"
-#endif
+
 #include "reaction.h"
 #include "qualityAssurance.h"
 
 void initRobot() {
   beep(20);
-#ifdef VOLTAGE
-  lowBattery();
-#endif
-  // #ifdef BiBoard_V1_0
-  //   Wire.begin(22, 21);
-  // #else
   Wire.begin();
-  // #endif
   SoftwareVersion = SoftwareVersion + BOARD + "_" + DATE;
   PTL('k');
   PTLF("Flush the serial buffer...");
@@ -634,9 +454,7 @@ void initRobot() {
   PTF("Software version: ");
   printToAllPorts(SoftwareVersion);
   i2cDetect(Wire);
-// #if defined BiBoard_V1_0 && !defined NYBBLE
-//   i2cDetect(Wire1);
-// #endif
+
 #ifndef I2C_EEPROM_ADDRESS
   config.begin("config", false);  // false: read/write mode. true: read-only mode.
 #endif
@@ -682,24 +500,10 @@ void initRobot() {
   newCmd[0] = '\0';
   skill = new Skill();
   skillList = new SkillList();
-  for (byte i = 0; i < randomMindListLength; i++) {
-    randomBase += choiceWeight[i];
-  }
-#ifdef NEOPIXEL_PIN
-  ledSetup();
-#endif
+
 #ifdef PWM_LED_PIN
   pinMode(PWM_LED_PIN, OUTPUT);
 #endif
-  // #ifdef VOLTAGE
-  //   do {
-  //     PTL("Check battery. You can skip by entering any characters in the Serial Monitor.");
-  //     if (Serial.available()) {
-  //       Serial.read();  // allow breaking the loop with any serial input
-  //       break;
-  //     }
-  //   } while (lowBattery());  //if the battery is low
-  // #endif
 
 #ifdef IR_PIN
   irrecv.enableIRIn();

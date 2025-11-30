@@ -220,114 +220,6 @@ void dealWithExceptions() {
 // V_real = V_read / vFactor, vFactor = 4096 / 3.3 / ratio
 // a more accurate fitting for V1_0 is V_real = V_read / 515 + 1.95
 
-#ifdef VOLTAGE
-bool lowBattery() {
-  long currentTime = millis() / CHECK_BATTERY_PERIOD;
-  if (currentTime > uptime) {
-    uptime = currentTime;
-    float voltage = analogRead(VOLTAGE);
-#ifdef BiBoard_V1_0
-    voltage = voltage / 515 + 1.9;
-#else
-    voltage = voltage / 414;
-#endif
-    if (voltage < NO_BATTERY_VOLTAGE2
-        || ((voltage < LOW_VOLTAGE2                                       // powered by 6V, voltage >= NO_BATTERY && voltage < LOW_VOLTAGE2
-             || (voltage > NO_BATTERY_VOLTAGE && voltage < LOW_VOLTAGE))  // powered by 7.4V
-            && fabs(voltage - lastVoltage) < 0.2)                         // not caused by power fluctuation during movements
-    ) {                                                                   // if battery voltage is low, it needs to be recharged
-      // give the robot a break when voltage drops after sprint
-      // adjust the thresholds according to your batteries' voltage
-      // if set too high, the robot will stop working when the battery still has power.
-      // If too low, the robot may not alarm before the battery shuts off
-      lowBatteryQ = true;
-      if (!safeRest) {
-        // shutServos();
-        // delay(2000);
-        strcpy(lastCmd, "rest");
-        loadBySkillName(lastCmd);
-        shutServos();
-        safeRest = true;
-      }
-      if (!batteryWarningCounter) {
-        PTF("Low power: ");
-        PT(voltage);
-        PTLF("V. The robot won't move.");
-        PTLF("Long-press the battery's button to turn it on!");
-#ifdef I2C_EEPROM_ADDRESS
-        if (i2c_eeprom_read_byte(EEPROM_BOOTUP_SOUND_STATE))
-#else
-        if (config.getBool("bootSndState", 1))
-#endif
-          playMelody(melodyLowBattery, sizeof(melodyLowBattery) / 2);
-      }
-      batteryWarningCounter = (batteryWarningCounter + 1) % BATTERY_WARNING_FREQ;
-      //    strip.show();
-      //       int8_t bStep = 1;
-      //       for (byte brightness = 1; brightness > 0; brightness += bStep) {
-      // #ifdef NEOPIXEL_PIN
-      //         strip.setPixelColor(0, strip.Color(brightness, 0, 0));
-      //         strip.show();
-      // #endif
-      // #ifdef PWM_LED_PIN
-      // if (autoLedQ)
-      //         analogWrite(PWM_LED_PIN, 255 - brightness);
-      // #endif
-      //         if (brightness == 255)
-      //           bStep = -1;
-      //         delay(5);
-      //       }
-      lastVoltage = voltage;
-      return true;
-    }
-    if (safeRest) {
-      // strcpy(lastCmd, "rest");
-      // loadBySkillName(lastCmd);
-      // shutServos();
-      safeRest = false;
-    }
-    lastVoltage = voltage;
-    if ((voltage > LOW_VOLTAGE + 0.2  // powered by 7.4V
-         || (voltage > LOW_VOLTAGE2 + 0.2
-             && voltage < NO_BATTERY_VOLTAGE))  // powered by 6V, voltage >= NO_BATTERY && voltage < LOW_VOLTAGE2
-        && lowBatteryQ)                         // +0.2 to avoid fluctuation around the threshold
-    {
-      // if (voltage > LOW_VOLTAGE + 0.2){
-      //   PT("Got ");
-      //   PT(voltage);
-      //   PTL(" V power");
-      // }
-      // else
-      //   PTL("Got 6.0 V power");
-      PT("Got ");
-      PT(voltage);
-      PTL(" V power");
-      playMelody(melodyOnBattery, sizeof(melodyOnBattery) / 2);
-      lowBatteryQ = false;
-      batteryWarningCounter = 0;
-      
-      // Reactivate PWM signals to fix servo non-responsiveness after battery power restoration
-      PTL("Reactivating servo PWM signals after power restoration...");
-#ifdef ESP_PWM
-      // Simply resend PWM signals for current positions
-      for (int c = 0; c < PWM_NUM; c++) {
-        servo[c].write(currentAng[c < 4 ? c : c + 4]);
-      }
-#else
-      // Resend PCA9685 PWM signals
-      for (int c = 0; c < PWM_NUM; c++) {
-        pwm.writeAngle(c, currentAng[c < 4 ? c : c + 4]);
-      }
-#endif
-      // Return to rest posture
-      strcpy(newCmd, "rest");
-      loadBySkillName(newCmd);
-    }
-  }
-  return false;
-}
-#endif
-
 void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever" loop() of OpenCatEsp32.ino
   if (newCmdIdx) {
     // PTLF("-----");
@@ -336,7 +228,6 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
       fineAdjustQ = true;
       // updateGyroQ = true;
       gyroBalanceQ = true;
-      autoSwitch = RANDOM_MIND;
       initialBoot = false;
     }
 #ifdef PWM_LED_PIN
@@ -481,158 +372,7 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
     }
 #endif
       case T_GYRO:
-      case T_RANDOM_MIND:
-        {
-          if (token == T_RANDOM_MIND) {
-            autoSwitch = !autoSwitch;
-            token = autoSwitch ? 'Z' : 'z';  // G for activated gyro
-          }
-#ifdef GYRO_PIN
-      else if (token == T_GYRO)
-      {
-        if (cmdLen == 0)
-        {
-          gyroBalanceQ = !gyroBalanceQ;
-          token = gyroBalanceQ ? 'G' : 'g'; // G for activated gyro
-        }
-        else
-        {
-          if (newCmd[0] == C_GYRO_CALIBRATE)
-          {
-            shutServos();
-            PTLF("Setting updateGyroQ to false...");
-            updateGyroQ = false;
-            if (newCmd[1] != C1_GYRO_CALIBRATE_IMMEDIATELY)
-            {
-              PTLF("\nPut the robot FLAT on the table and don't touch it during calibration.");
-              beep(8, 500, 500, 5);
-              beep(15, 500, 500, 1);
-            }
-            
-            // Wait for IMU task to terminate completely
-            if (TASK_imu != NULL) {
-//<<<<<<< HEAD
-              PTLF("Waiting for IMU task to terminate before calibration...");
-              // Wait for IMU task to terminate
-              while (eTaskGetState(TASK_imu) != eDeleted) {
-                  if(eTaskGetState(TASK_imu)== eReady){
-                      TASK_imu = NULL;
-                      break;
-                  }
-                vTaskDelay(100 / portTICK_PERIOD_MS);
-              }
-//=======
-//              eTaskState taskState = eTaskGetState(TASK_imu);
-//              PTHL("Task state:", taskState);
-//            
-//              if (taskState != eDeleted) {
-//                // Wait for task to terminate naturally
-//                PTLF("Waiting for IMU task to terminate...");
-//                unsigned long startTime = millis();
-//                const unsigned long timeout = 3000; // 3 second timeout
-//                
-//                // Wait for timeout
-//                while (TASK_imu != NULL && (millis() - startTime) <= timeout) {
-//                  delay(200);
-//                }
-//                
-//                // Handle timeout
-//                if (TASK_imu != NULL) {
-//                  PTLF("IMU task termination timeout - set task handle to NULL");
-//                  TASK_imu = NULL;    // Set task handle to NULL
-//                }
-//              }
-//                delay(50);  // Wait for IMU task to fully terminate
-//>>>>>>> pr/35
-            }
-            
-            // Create calibration task to run on core 0
-            xTaskCreatePinnedToCore(
-                taskCalibrateImuUsingCore0,         // Task function
-                "taskCalibrateImuUsingCore0",       // Task name
-                1800,                               // Task stack size
-                NULL,                               // Task parameters
-                1,                                  // Task priority
-                &taskCalibrateImuUsingCore0_handle, // Task handle
-                0                                   // Task core number to run on
-            );
-            
-            // Wait for updateGyroQ to be re-set to true, indicating calibration completion
-            unsigned long waitStart = millis();
-            const unsigned long maxWaitTime = 10000; // Maximum waiting time 10 seconds
-            
-            while (!updateGyroQ) {
-              if (millis() - waitStart > maxWaitTime) {
-                PTLF("Timeout waiting for calibration to complete. Forcing continuation.");
-                updateGyroQ = true; // Force continuation
-                break;
-              }
-              vTaskDelay(100 / portTICK_PERIOD_MS);
-            }
-            
-            PTLF("Calibration completed, allowing IMU to stabilize...");
-            delay(3000); // Allow IMU to stabilize after calibration
-            beep(18, 50, 50, 6);
 
-             // create IMU task
-             xTaskCreatePinnedToCore(taskIMU,        // Task function
-              "TaskIMU",                             // Task name
-              1500,                                  // Task stack size
-              &updateGyroQ,                          // Task parameters
-              1,                                     // Task priority
-              &TASK_imu,                             // Task handle
-              0);                                    // Task core number to run on
-
-            // Wait for task creation to complete
-            delay(100);
-            
-            // Get task handle, for subsequent operations
-            if (TASK_imu == NULL) {
-              TASK_imu = xTaskGetHandle("TaskIMU");
-              if (TASK_imu == NULL) {
-                PTLF("Warning: Failed to get IMU task handle!");
-              } else {
-                PTLF("IMU task created successfully");
-              }
-            }
-          }
-          else
-          {
-            byte i = 0;
-            while (newCmd[i] != '\0')
-            {
-              if (toupper(newCmd[i]) == C_GYRO_FINENESS)
-              {                                               // if newCmd[i] is 'f' or 'F'
-                fineAdjustQ = (newCmd[i] == C_GYRO_FINENESS); // if newCmd[i] == T_GYRO_FINENESS, fineAdjustQ is true. else newCmd[i] == C_GYRO_FINENESS_OFF, fineAdjustQ is false.
-                token = fineAdjustQ ? 'G' : 'g';              // G for activated gyro
-              }
-              else if (toupper(newCmd[i]) == C_GYRO_BALANCE)  // if newCmd[i] is 'b' or 'B'
-                gyroBalanceQ = (newCmd[i] == C_GYRO_BALANCE); // if newCmd[i] == T_GYRO_FINENESS, gyroBalanceQ is true. else is false.
-              else if (toupper(newCmd[i]) == C_GYRO_UPDATE)  // if newCmd[i] is 'u' or 'U' - Update gyro reading
-                updateGyroQ = (newCmd[i] == C_GYRO_UPDATE); // if newCmd[i] == 'U', updateGyroQ is true. else 'u', updateGyroQ is false.
-              else if (toupper(newCmd[i]) == C_PRINT)
-              {                                      // if newCmd[i] is 'p' or 'P'
-                printGyroQ = (newCmd[i] == C_PRINT); // if newCmd[i] == T_GYRO_PRINT, always print gyro. else only print once
-                print6Axis();
-              }
-              else if (newCmd[i] == '?')
-              {
-                PTF("Gyro state:");
-                PTT(" Update-", updateGyroQ);
-                PTT(" Balance-", gyroBalanceQ);
-                PTT(" Print-", printGyroQ);
-                PTTL(" Frequency-", fineAdjustQ);
-              }
-              i++;
-            }
-            imuSkip = fineAdjustQ ? IMU_SKIP : IMU_SKIP_MORE;
-            runDelay = fineAdjustQ ? delayMid : delayShort;
-          }
-        }
-      }
-#endif
-          break;
-        }
       case T_PAUSE:
         {
           tStep = !tStep;             // tStep can be -1
@@ -643,20 +383,6 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
             shutServos();
           break;
         }
-#ifdef VOLTAGE
-      case T_POWER:
-        {
-          float voltage = analogRead(VOLTAGE);
-#ifdef BiBoard_V1_0
-          voltage = voltage / 515 + 1.9;
-#else
-          voltage = voltage / 414;
-#endif
-          String message = "Voltage: ";
-          printToAllPorts(message + voltage + " V");
-          break;
-        }
-#endif
       case T_ACCELERATE:
         {
           runDelay = max(0, runDelay - 1);
@@ -1110,57 +836,6 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
                 break;
               }
 #endif
-#ifdef CAMERA
-            case EXTENSION_CAMERA:
-              {
-                char *option = newCmd;
-                while (*(++option) != '~') {
-                  if (*option == 'P')
-                    cameraPrintQ = 2;
-                  else if (*option == 'p')
-                    cameraPrintQ = 1;
-                  else if (*option == 'R')
-                    cameraReactionQ = true;
-                  else if (*option == 'r')
-                    cameraReactionQ = false;
-                }
-
-                if (cameraPrintQ == 1 && cameraTaskActiveQ) {
-                  printToAllPorts('=');
-                  showRecognitionResult(xCoord, yCoord, width, height);
-                  //PTL();
-                  // printToAllPorts(token);
-                  cameraPrintQ = 0;  // if the command is XCp, the camera will print the result only once
-                }
-
-                break;
-              }
-#endif
-#ifdef GESTURE
-            case EXTENSION_GESTURE:
-              {
-                char *option = newCmd;
-                while (*(++option) != '~') {
-                  if (*option == 'P')
-                    gesturePrintQ = 2;
-                  else if (*option == 'p')
-                    gesturePrintQ = 1;
-                  else if (*option == 'R')
-                    gestureReactionQ = true;
-                  else if (*option == 'r')
-                    gestureReactionQ = false;
-                }
-
-                if (gesturePrintQ == 1) {
-                  int readGesture = read_gesture();
-                  printToAllPorts('=');
-                  if (readGesture != GESTURE_NONE)
-                    printToAllPorts(readGesture);
-                  gesturePrintQ = 0;  // if the command is XGp, the gesture will print the detected result only once
-                }
-                break;
-              }
-#endif
           }
           break;
         }
@@ -1445,8 +1120,6 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
                                  // use ':' to add the delay time (mandatory)
                                  // add '>' to end the sub command
                                  // example: qk sit:1000>m 8 0 8 -30 8 0:500>
-                                 // Nybble wash face: qksit:100>o 1 0, 0 40 -20 4 0, 1 -30 20 4 30, 8 -70 10 4 60, 12 -10
-                                 // 10 4 0, 15 10 0 4 0:100>
           break;
         }
       default:
@@ -1468,7 +1141,7 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
       printToAllPorts(token);                     // postures, gaits and other tokens can confirm completion by sending the token back
       if (lastToken == T_SKILL
           && (lowerToken == T_GYRO || lowerToken == T_INDEXED_SIMULTANEOUS_ASC || lowerToken == T_INDEXED_SEQUENTIAL_ASC
-              || lowerToken == T_PAUSE || token == T_JOINTS || token == T_RANDOM_MIND || token == T_BALANCE_SLOPE
+              || lowerToken == T_PAUSE || token == T_JOINTS ||  token == T_BALANCE_SLOPE
               || token == T_ACCELERATE || token == T_DECELERATE || token == T_TILT))
         token = T_SKILL;
     }
@@ -1555,25 +1228,6 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
     servoFeedback(measureServoPin);
   // }
   else
-#ifdef GESTURE
-    if (gesturePrintQ == 2) {
-    if (gestureGetValue != GESTURE_NONE)
-      printToAllPorts(gestureGetValue);
-  }
-#endif
-#ifdef CAMERA
-  if (cameraPrintQ == 2 && cameraTaskActiveQ) {
-    if (xCoord != lastXcoord || yCoord != lastYcoord)
-    {
-      showRecognitionResult(xCoord, yCoord, width, height);
-#ifdef WEB_SERVER
-      sendCameraData(xCoord, yCoord, width, height); // Send camera data to WebSocket client
-#endif
-      lastXcoord = xCoord;
-      lastYcoord = yCoord;
-    }
-  } else if (!cameraTaskActiveQ)
-#endif
   {
     delay(1);  // avoid triggering WDT
   }

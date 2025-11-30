@@ -2,36 +2,8 @@
 #include "voice.h"
 #endif
 
-#ifdef VOICE_LD3320
-#include "voiceLD3320.h"
-#endif
-
-#ifdef CAMERA
-#include "camera.h"
-#endif
-
-#ifdef GESTURE
-#include "gesture.h"
-#endif
-
 #ifdef PIR
 #include "pir.h"
-#endif
-
-#ifdef DOUBLE_TOUCH
-#include "doubleTouch.h"
-#endif
-
-#ifdef DOUBLE_LIGHT
-#include "doubleLight.h"
-#endif
-
-#ifdef DOUBLE_INFRARED_DISTANCE
-#include "doubleInfraredDistance.h"
-#endif
-
-#ifdef BACKTOUCH_PIN
-#include "backTouch.h"
 #endif
 
 #ifdef OTHER_MODULES
@@ -66,11 +38,7 @@ void initModule(char moduleCode) {
     case EXTENSION_GROVE_SERIAL:
       {
         PTLF("Start Serial2");
-#ifdef BiBoard_V1_0
-        Serial2.begin(115200, SERIAL_8N1, 9, 10);
-#else
         Serial2.begin(115200, SERIAL_8N1, UART_RX2, UART_TX2);
-#endif
         Serial2.setTimeout(SERIAL_TIMEOUT);
         break;
       }
@@ -81,60 +49,10 @@ void initModule(char moduleCode) {
         break;
       }
 #endif
-#ifdef DOUBLE_TOUCH
-    case EXTENSION_DOUBLE_TOUCH:
-      {
-        loadBySkillName("sit");
-        touchSetup();
-        break;
-      }
-#endif
-#ifdef DOUBLE_LIGHT
-    case EXTENSION_DOUBLE_LIGHT:
-      {
-        loadBySkillName("sit");
-        doubleLightSetup();
-        break;
-      }
-#endif
-#ifdef DOUBLE_INFRARED_DISTANCE
-    case EXTENSION_DOUBLE_IR_DISTANCE:
-      {
-        loadBySkillName("sit");
-        doubleInfraredDistanceSetup();
-        break;
-      }
-#endif
 #ifdef PIR
     case EXTENSION_PIR:
       {
         pirSetup();
-        break;
-      }
-#endif
-#ifdef GESTURE
-    case EXTENSION_GESTURE:
-      {
-        loadBySkillName("sit");
-        gestureSetup();
-        break;
-      }
-#endif
-#ifdef CAMERA
-    case EXTENSION_CAMERA:
-      {
-        PTLF("Setting updateGyroQ to false...");
-        updateGyroQ = false;
-        i2cDetect(Wire);
-// #if defined BiBoard_V1_0 && !defined NYBBLE
-//         i2cDetect(Wire1);
-// #endif
-        loadBySkillName("sit");
-        if (!cameraSetup()) {
-          int i = indexOfModule(moduleCode);
-          PTHL("*** Fail to start ", moduleNames[i]);
-          successQ = false;
-        }
         break;
       }
 #endif
@@ -163,44 +81,9 @@ void stopModule(char moduleCode) {
         break;
       }
 #endif
-#ifdef DOUBLE_TOUCH
-    case EXTENSION_DOUBLE_TOUCH:
-      {
-        break;
-      }
-#endif
-#ifdef DOUBLE_LIGHT
-    case EXTENSION_DOUBLE_LIGHT:
-      {
-        break;
-      }
-#endif
-#ifdef DOUBLE_INFRARED_DISTANCE
-    case EXTENSION_DOUBLE_IR_DISTANCE:
-      {
-        manualHeadQ = false;
-        break;
-      }
-#endif
 #ifdef PIR
     case EXTENSION_PIR:
       {
-        break;
-      }
-#endif
-#ifdef GESTURE
-    case EXTENSION_GESTURE:
-      {
-        gestureStop();
-        break;
-      }
-#endif
-#ifdef CAMERA
-    case EXTENSION_CAMERA:
-      {
-        // cameraStop();   // Todo
-        cameraSetupSuccessful = false;
-        cameraTaskActiveQ = 0;
         break;
       }
 #endif
@@ -216,12 +99,7 @@ void showModuleStatus() {
   byte moduleCount = sizeof(moduleList) / sizeof(char);
   printListWithoutString((char *)moduleList, moduleCount);
   printListWithoutString(moduleActivatedQ, moduleCount);
-  moduleDemoQ = (moduleActivatedQfunction(EXTENSION_DOUBLE_LIGHT)
-                 || moduleActivatedQfunction(EXTENSION_DOUBLE_TOUCH)
-                 || moduleActivatedQfunction(EXTENSION_GESTURE)
-                 || moduleActivatedQfunction(EXTENSION_DOUBLE_IR_DISTANCE)
-                 || moduleActivatedQfunction(EXTENSION_CAMERA)
-                 || moduleActivatedQfunction(EXTENSION_PIR)
+  moduleDemoQ = (moduleActivatedQfunction(EXTENSION_PIR)
                  || moduleActivatedQfunction(EXTENSION_QUICK_DEMO));
 }
 
@@ -414,59 +292,17 @@ void readSignal() {
 
   long current = millis();
   if (newCmdIdx)
-    idleTimer = millis() +
-#ifdef DOUBLE_INFRARED_DISTANCE
-                0
-#else
-                IDLE_TIME
-#endif
-      ;
+    idleTimer = millis() +IDLE_TIME;
   else if (token != T_SERVO_CALIBRATE && token != T_SERVO_FOLLOW && token != T_SERVO_FEEDBACK && current - idleTimer > 0) {
     if (moduleIndex == -1)  // no active module
       return;
-#ifdef CAMERA
-    if (moduleActivatedQ[indexOfModule(EXTENSION_CAMERA)])
-      read_camera();
-#endif
-#ifdef GESTURE
-    if (moduleActivatedQ[indexOfModule(EXTENSION_GESTURE)])
-    {
-      gestureGetValue = read_gesture();
-      // PTHL("gestureValue02:", gestureGetValue);
-    }
-#endif
 #ifdef PIR
     if (moduleActivatedQ[indexOfModule(EXTENSION_PIR)])
       read_PIR();
 #endif
-#ifdef DOUBLE_TOUCH
-    if (moduleActivatedQ[indexOfModule(EXTENSION_DOUBLE_TOUCH)])
-      read_doubleTouch();
-#endif
-#ifdef DOUBLE_LIGHT
-    if (moduleActivatedQ[indexOfModule(EXTENSION_DOUBLE_LIGHT)])
-      read_doubleLight();
-#endif
-#ifdef DOUBLE_INFRARED_DISTANCE
-    if (moduleActivatedQ[indexOfModule(EXTENSION_DOUBLE_IR_DISTANCE)])
-      read_doubleInfraredDistance();  // has some bugs
-#endif
-    // powerSaver -> 4
-    // other -> 5
-    // randomMind -> 100
-    if (autoSwitch) {
-      randomMind();             // make the robot do random demos
-      powerSaver(POWER_SAVER);  // make the robot rest after a certain period, the unit is seconds
-    }
   }
 }
 
-// — read human sensors (top level) —
-void readHuman() {
-#ifdef TOUCH0
-  read_touch();
-#endif
-}
 // — generate behavior by fusing all sensors and instruction
 String decision() {
   return "";
@@ -475,24 +311,8 @@ String decision() {
 void read_sound() {
 }
 
-void read_GPS() {
-}
-#ifdef TOUCH0
-void read_touch() {
-  byte touchPin[] = {
-    TOUCH0,
-    TOUCH1,
-    TOUCH2,
-    TOUCH3,
-  };
-  for (byte t = 0; t < 4; t++) {
-    int touchValue = touchRead(touchPin[t]);  // do something with the touch?
-    //    PT(touchValue);
-    //    PT('\t');
-  }
-  //  PTL();
-}
-#endif
+
+
 void readEnvironment() {
 #ifdef GYRO_PIN
   // if (updateGyroQ && !(frame % imuSkip))
@@ -502,5 +322,4 @@ void readEnvironment() {
       print6Axis();
 #endif
   read_sound();
-  read_GPS();
 }

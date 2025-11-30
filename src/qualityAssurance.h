@@ -172,9 +172,7 @@ void QA() {
     if (choice == 'Y' || choice == 'y')
 #endif
     {
-#ifdef VOLTAGE
-      // testDcDc(); //unnecessary
-#endif
+
 #ifdef GYRO_PIN
       testIMU();
 #endif
