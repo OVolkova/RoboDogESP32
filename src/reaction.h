@@ -72,14 +72,6 @@ void dealWithExceptions() {
             if (tQueue->cleared() && skill->period == 1) {
               PTL("EXCEPTION: Knocked");
               tQueue->addTask('k', "knock");
-#if defined NYBBLE && defined ULTRASONIC
-              if (!moduleActivatedQ[0]) {  // serial2 may be used to connect serial2 rather than the RGB ultraconic sensor
-                int8_t clrRed[] = { 125, 0, 0, 0, 0, 126 };
-                int8_t clrBlue[] = { 0, 0, 125, 0, 0, 126 };
-                tQueue->addTask('C', clrRed, 1);
-                tQueue->addTask('C', clrBlue);
-              }
-#endif
               tQueue->addTask('k', "up");
             }
             break;
@@ -180,14 +172,12 @@ void dealWithExceptions() {
       //   }
       // }
     } else {
-#ifndef ROBOT_ARM
       if (tQueue->cleared() && prev_imuException == IMU_EXCEPTION_LIFTED) {
         // strcpy(newCmd, "dropRec");
         // loadBySkillName(newCmd);
         // token = 'k';
         tQueue->addTask('k', "dropRec", 500);
       }
-#endif
       prev_imuException = imuException;
     }
   }
@@ -714,21 +704,6 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
         //     playMelody(melody1, sizeof(melody1) / 2);
         //     break;
         //   }
-#ifdef ULTRASONIC
-      case T_COLOR:
-        {
-          if (!ultrasonicLEDinitializedQ)
-            rgbUltrasonicSetup();
-          if (cmdLen < 2)  // a single 'C' will turn off the manual color mode
-            manualEyeColorQ = false;
-          else {  // turn on the manual color mode
-            manualEyeColorQ = true;
-            ultrasonic.SetRgbEffect(E_RGB_INDEX(uint8_t(newCmd[3])), ultrasonic.color(newCmd[0], newCmd[1], newCmd[2]),
-                                    uint8_t(newCmd[4]));
-          }
-          break;
-        }
-#endif
       case ';':
         {
           setServoP(P_SOFT);
@@ -918,28 +893,6 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
                   }
                   servoCalib[target[0]] = target[1];
                 }
-#if defined ROBOT_ARM && defined GYRO_PIN
-                if (target[0] == -2)  // auto calibrate the robot arm's pincer
-                {
-                  // loadBySkillName("triStand");
-                  // shutServos();
-                  servoCalib[2] = -30;
-                  calibratedPWM(2, 0);
-                  calibratedPWM(1, 90);
-                  delay(500);
-                  int criticalAngle = calibratePincerByVibration(-25, 25, 4);
-                  criticalAngle = calibratePincerByVibration(criticalAngle - 4, criticalAngle + 4, 1);
-                  servoCalib[2] = servoCalib[2] + criticalAngle + 16;
-                  PTHL("Pincer calibrate angle: ", servoCalib[2]);
-#ifdef I2C_EEPROM_ADDRESS
-                  i2c_eeprom_write_byte(EEPROM_CALIB + 2, servoCalib[2]);
-#else
-                  config.putBytes("calib", servoCalib, DOF);
-#endif
-                  calibratedZeroPosition[2] = zeroPosition[2] + float(servoCalib[2]) * rotationDirection[2];
-                  loadBySkillName("calib");
-                } else
-#endif
                   if (target[0] < DOF && target[0] >= 0) {
                   int duty = zeroPosition[target[0]] + float(servoCalib[target[0]]) * rotationDirection[target[0]];
                   if (PWM_NUM == 12 && WALKING_DOF == 8 && target[0] > 3
@@ -1156,21 +1109,6 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
                 set_voice(newCmd);
                 break;
               }
-#endif
-#ifdef ULTRASONIC
-      case EXTENSION_ULTRASONIC:
-      {
-        if (cmdLen >= 3)
-        {
-          int distance = readUltrasonic((int8_t)newCmd[1], (int8_t)newCmd[2]);
-          printToAllPorts('=');
-          printToAllPorts(distance);
-#ifdef WEB_SERVER
-          sendUltrasonicData(distance); // 发送超声波数据到WebSocket客户端
-#endif
-        }
-        break;
-      }
 #endif
 #ifdef CAMERA
             case EXTENSION_CAMERA:

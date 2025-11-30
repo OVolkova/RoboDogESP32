@@ -18,7 +18,6 @@
 
 // you can also activate the following modes by the 'X' token defined in src/OpenCat.h
 #define VOICE                     // Petoi Grove voice module
-// #define ULTRASONIC                // for Petoi RGB ultrasonic distance sensor
 #define PIR                       // for PIR (Passive Infrared) sensor
 // #define DOUBLE_TOUCH              // for double touch sensor
 // #define DOUBLE_LIGHT              // for double light sensor
@@ -26,7 +25,7 @@
 // #define GESTURE                   // for Gesture module
 // #define CAMERA                    // for Mu Vision camera
 #define QUICK_DEMO                // for quick demo
-// #define ROBOT_ARM                 // for attaching head clip arm
+
 #include "src/RoboDog.h"
 
 void setup() {

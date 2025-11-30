@@ -107,22 +107,11 @@ String uniqueName = "";
 #include "InstinctNybbleESP.h"
 
 #elif defined BITTLE
-#ifdef ROBOT_ARM
-#define MODEL "Bittle X+Arm"
-#include "InstinctBittleESP_arm.h"
-#define REGULAR P1S
-#define KNEE P1S
-#elif defined VT
-#define MODEL "Bittle X+VT"
-#include "InstinctBittleESP_vt.h"
-#define REGULAR P1L
-#define KNEE P1L
-#else
 #define MODEL "Bittle X"
 #include "InstinctBittleESP.h"
 #define REGULAR P1L
 #define KNEE P1L
-#endif
+
 
 #define HEAD
 #define TAIL  // the robot arm's clip is assigned to the tail joint
@@ -300,8 +289,6 @@ bool newBoard = false;
 #define T_SERVO_CALIBRATE \
   'c'  // send the robot to calibration posture for attaching legs and fine-tuning the joint offsets. c jointIndex1
        // offset1 jointIndex2 offset2 ... e.g. c0 7 1 -4 2 3 8 5
-#define T_COLOR \
-  'C'  // change the eye colors of the RGB ultrasonic sensor. a single 'C' will cancel the manual eye colors
 #define T_REST 'd'  // set the robot to rest posture and shut down all the servos. "d index" can turn off a single servo
 #define T_SERVO_FEEDBACK \
   'f'  // return the servo's position info if the chip supports feedback. e.g. f8 returns the 8th joint's position. A
@@ -350,7 +337,6 @@ bool newBoard = false;
 #define T_PAUSE 'p'  // pause
 #define T_POWER 'P'  // power, print the voltage
 #define T_TASK_QUEUE 'q'
-#define T_ROBOT_ARM 'R'
 #define T_SAVE 's'
 #define T_TILT 't'
 #define T_TEMP 'T'  // call the last skill data received from the serial port
@@ -381,8 +367,6 @@ bool newBoard = false;
 #define EXTENSION_DOUBLE_LIGHT 'L'  // connect to ANALOG1, ANALOG2
 #define EXTENSION_DOUBLE_IR_DISTANCE 'D'  // connect to ANALOG3, ANALOG4
 #define EXTENSION_PIR 'I'  // connect to ANALOG3
-#define EXTENSION_BACKTOUCH 'B'  // connect to BACKTOUCH_PIN
-#define EXTENSION_ULTRASONIC 'U'  // connect to Grove UART2
 #define EXTENSION_GESTURE 'G'  // connect to Grove I2C
 #define EXTENSION_CAMERA 'C'  // connect to Grove I2C
 #define EXTENSION_QUICK_DEMO 'Q'  // activate the quick demo at the end of OpenCatEsp32.ino
@@ -495,15 +479,13 @@ int8_t moduleList[] = {
     EXTENSION_DOUBLE_LIGHT,
     EXTENSION_DOUBLE_IR_DISTANCE,
     EXTENSION_PIR,
-    EXTENSION_BACKTOUCH,
-    EXTENSION_ULTRASONIC,
     EXTENSION_GESTURE,
     EXTENSION_CAMERA,
     EXTENSION_QUICK_DEMO,
 };
 
 String moduleNames[] = {"Grove_Serial", "Voice",      "Double_Touch", "Double_Light ", "Double_IR_Distance ", "PIR",
-                        "BackTouch",    "Ultrasonic", "Gesture",      "Camera",        "Quick_Demo"};
+                        "Gesture",      "Camera",        "Quick_Demo"};
 #ifdef NYBBLE
 bool moduleActivatedQ[] = {0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0};
 #else
@@ -564,11 +546,7 @@ int8_t rotationDirection[] = {1, -1, -1, 1, 1, -1, 1, -1, 1, -1, -1, 1, -1, 1, 1
 #ifdef BITTLE
 int angleLimit[][2] = {
     {-120, 120},
-#ifdef ROBOT_ARM
-    {-10, 180},
-#else
     {-85, 85},
-#endif
     {-120, 120}, {-120, 120},
 
     {-90, 60},   {-90, 60},   {-90, 90},  {-90, 90},

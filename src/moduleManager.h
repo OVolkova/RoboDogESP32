@@ -10,10 +10,6 @@
 #include "camera.h"
 #endif
 
-#ifdef ULTRASONIC
-#include "ultrasonic.h"
-#endif
-
 #ifdef GESTURE
 #include "gesture.h"
 #endif
@@ -36,10 +32,6 @@
 
 #ifdef BACKTOUCH_PIN
 #include "backTouch.h"
-#endif
-
-#ifdef ROBOT_ARM
-#include "robotArm.h"
 #endif
 
 #ifdef OTHER_MODULES
@@ -89,14 +81,6 @@ void initModule(char moduleCode) {
         break;
       }
 #endif
-#ifdef ULTRASONIC
-    case EXTENSION_ULTRASONIC:
-      {
-        loadBySkillName("sit");
-        rgbUltrasonicSetup();
-        break;
-      }
-#endif
 #ifdef DOUBLE_TOUCH
     case EXTENSION_DOUBLE_TOUCH:
       {
@@ -133,30 +117,6 @@ void initModule(char moduleCode) {
       {
         loadBySkillName("sit");
         gestureSetup();
-        break;
-      }
-#endif
-#ifdef BACKTOUCH_PIN
-    case EXTENSION_BACKTOUCH:
-      {
-        // Detect at init whether the sensor is connected; disable if not
-        bool connected = true;
-// #ifdef BACKTOUCH_PIN
-        pinMode(BACKTOUCH_PIN, INPUT_PULLDOWN); // avoid floating
-        analogRead(BACKTOUCH_PIN);              // prime ADC channel
-        delayMicroseconds(80);                  // settle
-        int raw = analogRead(BACKTOUCH_PIN);
-        PTHL("BackTouch raw", raw);
-        // With sensor connected and no touch it should read 4095. Otherwise treat as not connected.
-        if (raw != 4095) {
-          connected = false;
-        }
-// #endif
-        if (connected) {
-          backTouchSetup();
-        } else {
-          successQ = false; // 不启用该模块
-        }
         break;
       }
 #endif
@@ -203,14 +163,6 @@ void stopModule(char moduleCode) {
         break;
       }
 #endif
-#ifdef ULTRASONIC
-    case EXTENSION_ULTRASONIC:
-      {
-        // ultrasonicStop();   // Todo
-        ultrasonicLEDinitializedQ = false;
-        break;
-      }
-#endif
 #ifdef DOUBLE_TOUCH
     case EXTENSION_DOUBLE_TOUCH:
       {
@@ -252,12 +204,6 @@ void stopModule(char moduleCode) {
         break;
       }
 #endif
-#ifdef BACKTOUCH_PIN
-    case EXTENSION_BACKTOUCH:
-      {
-        break;
-      }
-#endif
 #ifdef QUICK_DEMO
     case EXTENSION_QUICK_DEMO:
       {
@@ -276,8 +222,6 @@ void showModuleStatus() {
                  || moduleActivatedQfunction(EXTENSION_DOUBLE_IR_DISTANCE)
                  || moduleActivatedQfunction(EXTENSION_CAMERA)
                  || moduleActivatedQfunction(EXTENSION_PIR)
-                 // || moduleActivatedQfunction(EXTENSION_BACKTOUCH)
-                 // || moduleActivatedQfunction(EXTENSION_ULTRASONIC)
                  || moduleActivatedQfunction(EXTENSION_QUICK_DEMO));
 }
 
@@ -313,7 +257,7 @@ void reconfigureTheActiveModule(char *moduleCode) {
     
     // Original logic: protect voice and backtouch unless closing all
     if (!isCloseOnlyOperation && 
-        (moduleList[i] == EXTENSION_VOICE || moduleList[i] == EXTENSION_BACKTOUCH) && 
+        (moduleList[i] == EXTENSION_VOICE) && 
         targetModule != '-') continue;
     
     // Unified disable logic
@@ -363,11 +307,6 @@ void initModuleManager() {
 #ifdef VOICE
     else if (moduleList[i] == EXTENSION_VOICE) {
       voiceStop();
-    }
-#endif
-#if defined ULTRASONIC && defined NYBBLE
-    else if (moduleList[i] == EXTENSION_ULTRASONIC) {
-      rgbUltrasonicSetup();
     }
 #endif
   }
@@ -489,10 +428,6 @@ void readSignal() {
     if (moduleActivatedQ[indexOfModule(EXTENSION_CAMERA)])
       read_camera();
 #endif
-#ifdef ULTRASONIC
-    if (moduleActivatedQ[indexOfModule(EXTENSION_ULTRASONIC)])
-      read_RGBultrasonic();
-#endif
 #ifdef GESTURE
     if (moduleActivatedQ[indexOfModule(EXTENSION_GESTURE)])
     {
@@ -515,10 +450,6 @@ void readSignal() {
 #ifdef DOUBLE_INFRARED_DISTANCE
     if (moduleActivatedQ[indexOfModule(EXTENSION_DOUBLE_IR_DISTANCE)])
       read_doubleInfraredDistance();  // has some bugs
-#endif
-#ifdef BACKTOUCH_PIN
-    if (moduleActivatedQ[indexOfModule(EXTENSION_BACKTOUCH)])
-      read_backTouch();
 #endif
     // powerSaver -> 4
     // other -> 5

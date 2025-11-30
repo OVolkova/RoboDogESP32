@@ -620,7 +620,7 @@ void configSetup() {
 #ifdef VOLTAGE
     if (!lowBatteryQ)  // won't play sound if only powered by USB. It avoid noise when developing codes
 #endif
-      playMelody(melodyInit, sizeof(melodyInit) / 2);
+      // playMelody(melodyInit, sizeof(melodyInit) / 2);
 #endif
 #ifndef AUTO_INIT
     PTL("- Reset the joints' calibration offsets? (Y/n): ");
@@ -709,7 +709,7 @@ void configSetup() {
 #ifdef VOLTAGE
     if (!lowBatteryQ)  // won't play sound if only powered by USB. It avoid noise when developing codes
 #endif
-      playMelody(melodyNormalBoot, sizeof(melodyNormalBoot) / 2);
+      // playMelody(melodyNormalBoot, sizeof(melodyNormalBoot) / 2);
   }
 }
 

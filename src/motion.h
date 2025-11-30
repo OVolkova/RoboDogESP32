@@ -1,7 +1,3 @@
-#ifdef ROBOT_ARM
-bool pincerClosedQ = true;
-#endif
-
 void calibratedPWM(byte i, float angle, float speedRatio = 0) {
   if (PWM_NUM == 12 && WALKING_DOF == 8 && i > 3 && i < 8)  // there's no such joint in this configuration
     return;
@@ -10,10 +6,6 @@ void calibratedPWM(byte i, float angle, float speedRatio = 0) {
   int duty0 = calibratedZeroPosition[i] + currentAng[i] * rotationDirection[i];
   previousAng[i] = currentAng[i];
   currentAng[i] = angle;
-  // #ifdef ROBOT_ARM
-  //   if (actualServoIndex == 2 && currentAng[2] == 0 && pincerClosedQ)
-  //     return;
-  // #endif
   int duty = calibratedZeroPosition[i] + angle * rotationDirection[i];
   int steps = speedRatio > 0 ? int(round(abs(duty - duty0) / 1.0 /*degreeStep*/ / speedRatio)) : 0;
   // if default speed is 0, no interpolation will be used
@@ -33,12 +25,6 @@ void calibratedPWM(byte i, float angle, float speedRatio = 0) {
     }
     //    delayMicroseconds(1);
   }
-  // #ifdef ROBOT_ARM
-  //   if (actualServoIndex == 2 && currentAng[2] == 0 && !pincerClosedQ) {
-  //     shutServos(2);  //release the power on the pincer to avoid stuck
-  //     pincerClosedQ = true;
-  //   }
-  // #endif
 }
 
 void allCalibratedPWM(int *dutyAng, byte offset = 0) {
@@ -588,29 +574,13 @@ void updateCPG() {
 }
 int calibrationReference[] = {
 // the angle difference between P1L and P1S is significant for auto calibration.
-#ifdef NYBBLE  // with plastic servo P1L
-  0, 42, 0, 0, 0, 0, 0, 0,
-  72, 72, -68, -68, -63, -63, 63, 63
-#elif defined ROBOT_ARM  //  Bittle R with metal servo P1S
-  0, 55, 0, 0, 0, 0, 0, 0,
-  65, 65, 77, 77, -63, -63, -63, -63
-#else                    // Bittle with plastic servo P1L
   0, 0, 0, 0, 0, 0, 0, 0,
   73, 73, 76, 76, -66, -66, -66, -66
-#endif
 };
 
 // int calibrationReference2[] = {
-// #ifdef NYBBLE  //with plastic servo P1L
-//   0, 42, 0, 0, 0, 0, 0, 0,
-//   72, 72, -68, -68, -63, -63, 63, 63
-// #elif defined ROBOT_ARM  //  Bittle R with metal servo P1S
-//   0, 50, 0, 0, 0, 0, 0, 0,
-//   -85, -85, -70, -70,83, 83, 83, 83
-// #else                    //Bittle with plastic servo P1L
 //   0, 0, 0, 0, 0, 0, 0, 0,
 //   73, 73, 76, 76, -66, -66, -66, -66
-// #endif
 // };
 void autoCalibrate() {
   // PTLF("Auto calibration reference:");
