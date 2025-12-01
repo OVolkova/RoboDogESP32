@@ -87,11 +87,7 @@ int read_gesture() {
             tQueue->addTask(T_BEEP_BIN, melody54321, 0);
             tQueue->addTask('k', "sit");
             tQueue->addTask('k',
-#ifdef NYBBLE
-                            "wsf"
-#else
                             "scrh"
-#endif
             );
             break;
           }

@@ -4,12 +4,9 @@
 
 #include "RgbUltrasonic.h"
 
-#ifdef BiBoard_V1_0
-RgbUltrasonic ultrasonic(UART_RX2, UART_TX2);  //(UART_RX, UART_TX);  //(signal, RGB) use the Grove Tx Rx
-#else
 RgbUltrasonic ultrasonic(UART_RX2, UART_TX2);  //(signal, RGB) use the Grove Tx Rx
 // RgbUltrasonic ultrasonic(27, 23);  //(signal, RGB) use the infrared reciever's pin 23 and pwm pin 27
-#endif
+
 // The RGB LED ultrasonic module should be plugged in the fourth grove socket with D6, D7
 
 int interval = 3;
@@ -19,11 +16,8 @@ long ultraTimer;
 int ultraInterval = 1000;
 int distance;
 
-#ifdef NYBBLE
-int feedbackDirection = 1;
-#else
 int feedbackDirection = -1;
-#endif
+
 bool ultrasonicLEDinitializedQ = false;
 void logoColor() {
   ultrasonic.SetRgbEffect(E_RGB_RIGHT, ultrasonic.color(0, 28, 255), E_EFFECT_STEADY);  // the side is defined subjectively as the cat
@@ -128,21 +122,14 @@ void read_RGBultrasonic() {
         if (dice < 4)
           tQueue->addTask('k', "wkF", 2000);
       }
-      // #ifdef NYBBLE
-      //       int mid[] = {
-      //         15, 0, 0, 0,       //
-      //         0, 0, 0, 0,        //
-      //         30, 30, -30, -30,  //
-      //         30, 30, -30, -30,  //
-      //       };
-      // #else
+
       //       int mid[] = {
       //         15, 0, 0, 0,       //
       //         0, 0, 0, 0,        //
       //         30, 30, 90, 90,    //
       //         30, 30, -30, -30,  //
       //       };
-      // #endif
+
       //       int allParameter[] = { mid[0] - distance / 4, -10 + distance / 4, distance * (random() % 50 < 1 ? int(random() % 2 - 1) : 1)/2, 0,
       //                              0, 0, 0, 0,
       //                              mid[8] - 15 + distance / 4, mid[9] - 15 + distance / 4, mid[10] - 30 + distance * feedbackDirection/2, mid[11] - 30 + distance * feedbackDirection/2,

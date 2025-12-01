@@ -72,14 +72,6 @@ void dealWithExceptions() {
             if (tQueue->cleared() && skill->period == 1) {
               PTL("EXCEPTION: Knocked");
               tQueue->addTask('k', "knock");
-#if defined NYBBLE && defined ULTRASONIC
-              if (!moduleActivatedQ[0]) {  // serial2 may be used to connect serial2 rather than the RGB ultraconic sensor
-                int8_t clrRed[] = { 125, 0, 0, 0, 0, 126 };
-                int8_t clrBlue[] = { 0, 0, 125, 0, 0, 126 };
-                tQueue->addTask('C', clrRed, 1);
-                tQueue->addTask('C', clrBlue);
-              }
-#endif
               tQueue->addTask('k', "up");
             }
             break;
@@ -234,11 +226,7 @@ bool lowBattery() {
   if (currentTime > uptime) {
     uptime = currentTime;
     float voltage = analogRead(VOLTAGE);
-#ifdef BiBoard_V1_0
-    voltage = voltage / 515 + 1.9;
-#else
     voltage = voltage / 414;
-#endif
     if (voltage < NO_BATTERY_VOLTAGE2
         || ((voltage < LOW_VOLTAGE2                                       // powered by 6V, voltage >= NO_BATTERY && voltage < LOW_VOLTAGE2
              || (voltage > NO_BATTERY_VOLTAGE && voltage < LOW_VOLTAGE))  // powered by 7.4V
@@ -655,11 +643,7 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
       case T_POWER:
         {
           float voltage = analogRead(VOLTAGE);
-#ifdef BiBoard_V1_0
-          voltage = voltage / 515 + 1.9;
-#else
           voltage = voltage / 414;
-#endif
           String message = "Voltage: ";
           printToAllPorts(message + voltage + " V");
           break;
@@ -1483,8 +1467,6 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
                                  // use ':' to add the delay time (mandatory)
                                  // add '>' to end the sub command
                                  // example: qk sit:1000>m 8 0 8 -30 8 0:500>
-                                 // Nybble wash face: qksit:100>o 1 0, 0 40 -20 4 0, 1 -30 20 4 30, 8 -70 10 4 60, 12 -10
-                                 // 10 4 0, 15 10 0 4 0:100>
           break;
         }
       default:

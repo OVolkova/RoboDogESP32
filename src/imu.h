@@ -245,11 +245,6 @@ public:
       for (byte i = 0; i < 3; i++) {  // no need to flip yaw
         ypr[i] *= degPerRad;
         a_real[i] = *xyzReal[i] / 8192.0 * GRAVITY;
-#ifdef BiBoard_V0_1  // # rotate 180 degree
-        ypr[i] = -ypr[i];
-        if (i != 2)
-          a_real[i] = -a_real[i];
-#endif
       }
       return true;
     }

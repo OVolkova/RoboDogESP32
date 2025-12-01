@@ -467,11 +467,8 @@ void loadBySkillName(const char *skillName) {  // get lookup information from on
       skill->mirror();  // mirror the direction of a behavior
     coinFace = !coinFace;
     skill->transformToSkill(skill->nearestFrame());
-    // #ifdef NYBBLE
+
     for (byte i = 0; i < HEAD_GROUP_LEN; i++)
       targetHead[i] = currentAng[i] - currentAdjust[i];
-    // #endif
-    //    runDelay = delayMid + 2;
-    // skill->info();
   }
 }

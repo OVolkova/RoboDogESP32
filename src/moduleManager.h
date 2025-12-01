@@ -50,11 +50,7 @@ void initModule(char moduleCode) {
     case EXTENSION_GROVE_SERIAL:
       {
         PTLF("Start Serial2");
-#ifdef BiBoard_V1_0
-        Serial2.begin(115200, SERIAL_8N1, 9, 10);
-#else
         Serial2.begin(115200, SERIAL_8N1, UART_RX2, UART_TX2);
-#endif
         Serial2.setTimeout(SERIAL_TIMEOUT);
         break;
       }
@@ -94,9 +90,7 @@ void initModule(char moduleCode) {
         PTLF("Setting updateGyroQ to false...");
         updateGyroQ = false;
         i2cDetect(Wire);
-// #if defined BiBoard_V1_0 && !defined NYBBLE
-//         i2cDetect(Wire1);
-// #endif
+
         loadBySkillName("sit");
         if (!cameraSetup()) {
           int i = indexOfModule(moduleCode);
@@ -262,11 +256,6 @@ void initModuleManager() {
 #ifdef VOICE
     else if (moduleList[i] == EXTENSION_VOICE) {
       voiceStop();
-    }
-#endif
-#if defined ULTRASONIC && defined NYBBLE
-    else if (moduleList[i] == EXTENSION_ULTRASONIC) {
-      rgbUltrasonicSetup();
     }
 #endif
   }
