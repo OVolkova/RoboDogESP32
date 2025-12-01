@@ -2,10 +2,6 @@
 #include "voice.h"
 #endif
 
-#ifdef VOICE_LD3320
-#include "voiceLD3320.h"
-#endif
-
 #ifdef CAMERA
 #include "camera.h"
 #endif
@@ -20,22 +16,6 @@
 
 #ifdef PIR
 #include "pir.h"
-#endif
-
-#ifdef DOUBLE_TOUCH
-#include "doubleTouch.h"
-#endif
-
-#ifdef DOUBLE_LIGHT
-#include "doubleLight.h"
-#endif
-
-#ifdef DOUBLE_INFRARED_DISTANCE
-#include "doubleInfraredDistance.h"
-#endif
-
-#ifdef BACKTOUCH_PIN
-#include "backTouch.h"
 #endif
 
 #ifdef OTHER_MODULES
@@ -93,30 +73,6 @@ void initModule(char moduleCode) {
         break;
       }
 #endif
-#ifdef DOUBLE_TOUCH
-    case EXTENSION_DOUBLE_TOUCH:
-      {
-        loadBySkillName("sit");
-        touchSetup();
-        break;
-      }
-#endif
-#ifdef DOUBLE_LIGHT
-    case EXTENSION_DOUBLE_LIGHT:
-      {
-        loadBySkillName("sit");
-        doubleLightSetup();
-        break;
-      }
-#endif
-#ifdef DOUBLE_INFRARED_DISTANCE
-    case EXTENSION_DOUBLE_IR_DISTANCE:
-      {
-        loadBySkillName("sit");
-        doubleInfraredDistanceSetup();
-        break;
-      }
-#endif
 #ifdef PIR
     case EXTENSION_PIR:
       {
@@ -129,30 +85,6 @@ void initModule(char moduleCode) {
       {
         loadBySkillName("sit");
         gestureSetup();
-        break;
-      }
-#endif
-#ifdef BACKTOUCH_PIN
-    case EXTENSION_BACKTOUCH:
-      {
-        // Detect at init whether the sensor is connected; disable if not
-        bool connected = true;
-// #ifdef BACKTOUCH_PIN
-        pinMode(BACKTOUCH_PIN, INPUT_PULLDOWN); // avoid floating
-        analogRead(BACKTOUCH_PIN);              // prime ADC channel
-        delayMicroseconds(80);                  // settle
-        int raw = analogRead(BACKTOUCH_PIN);
-        PTHL("BackTouch raw", raw);
-        // With sensor connected and no touch it should read 4095. Otherwise treat as not connected.
-        if (raw != 4095) {
-          connected = false;
-        }
-// #endif
-        if (connected) {
-          backTouchSetup();
-        } else {
-          successQ = false; // 不启用该模块
-        }
         break;
       }
 #endif
@@ -207,25 +139,6 @@ void stopModule(char moduleCode) {
         break;
       }
 #endif
-#ifdef DOUBLE_TOUCH
-    case EXTENSION_DOUBLE_TOUCH:
-      {
-        break;
-      }
-#endif
-#ifdef DOUBLE_LIGHT
-    case EXTENSION_DOUBLE_LIGHT:
-      {
-        break;
-      }
-#endif
-#ifdef DOUBLE_INFRARED_DISTANCE
-    case EXTENSION_DOUBLE_IR_DISTANCE:
-      {
-        manualHeadQ = false;
-        break;
-      }
-#endif
 #ifdef PIR
     case EXTENSION_PIR:
       {
@@ -248,12 +161,6 @@ void stopModule(char moduleCode) {
         break;
       }
 #endif
-#ifdef BACKTOUCH_PIN
-    case EXTENSION_BACKTOUCH:
-      {
-        break;
-      }
-#endif
 #ifdef QUICK_DEMO
     case EXTENSION_QUICK_DEMO:
       {
@@ -266,13 +173,9 @@ void showModuleStatus() {
   byte moduleCount = sizeof(moduleList) / sizeof(char);
   printListWithoutString((char *)moduleList, moduleCount);
   printListWithoutString(moduleActivatedQ, moduleCount);
-  moduleDemoQ = (moduleActivatedQfunction(EXTENSION_DOUBLE_LIGHT)
-                 || moduleActivatedQfunction(EXTENSION_DOUBLE_TOUCH)
-                 || moduleActivatedQfunction(EXTENSION_GESTURE)
-                 || moduleActivatedQfunction(EXTENSION_DOUBLE_IR_DISTANCE)
+  moduleDemoQ = (moduleActivatedQfunction(EXTENSION_GESTURE)
                  || moduleActivatedQfunction(EXTENSION_CAMERA)
                  || moduleActivatedQfunction(EXTENSION_PIR)
-                 // || moduleActivatedQfunction(EXTENSION_BACKTOUCH)
                  // || moduleActivatedQfunction(EXTENSION_ULTRASONIC)
                  || moduleActivatedQfunction(EXTENSION_QUICK_DEMO));
 }
@@ -307,9 +210,9 @@ void reconfigureTheActiveModule(char *moduleCode) {
     if ((isCloseOnlyOperation && moduleList[i] != targetModule) || 
         (!isCloseOnlyOperation && moduleList[i] == targetModule)) continue;
     
-    // Original logic: protect voice and backtouch unless closing all
+    // Original logic: protect voice unless closing all
     if (!isCloseOnlyOperation && 
-        (moduleList[i] == EXTENSION_VOICE || moduleList[i] == EXTENSION_BACKTOUCH) && 
+        (moduleList[i] == EXTENSION_VOICE ) && 
         targetModule != '-') continue;
     
     // Unified disable logic
@@ -471,13 +374,7 @@ void readSignal() {
 
   long current = millis();
   if (newCmdIdx)
-    idleTimer = millis() +
-#ifdef DOUBLE_INFRARED_DISTANCE
-                0
-#else
-                IDLE_TIME
-#endif
-      ;
+    idleTimer = millis() + IDLE_TIME ;
   else if (token != T_SERVO_CALIBRATE && token != T_SERVO_FOLLOW && token != T_SERVO_FEEDBACK && current - idleTimer > 0) {
     if (moduleIndex == -1)  // no active module
       return;
@@ -499,22 +396,6 @@ void readSignal() {
 #ifdef PIR
     if (moduleActivatedQ[indexOfModule(EXTENSION_PIR)])
       read_PIR();
-#endif
-#ifdef DOUBLE_TOUCH
-    if (moduleActivatedQ[indexOfModule(EXTENSION_DOUBLE_TOUCH)])
-      read_doubleTouch();
-#endif
-#ifdef DOUBLE_LIGHT
-    if (moduleActivatedQ[indexOfModule(EXTENSION_DOUBLE_LIGHT)])
-      read_doubleLight();
-#endif
-#ifdef DOUBLE_INFRARED_DISTANCE
-    if (moduleActivatedQ[indexOfModule(EXTENSION_DOUBLE_IR_DISTANCE)])
-      read_doubleInfraredDistance();  // has some bugs
-#endif
-#ifdef BACKTOUCH_PIN
-    if (moduleActivatedQ[indexOfModule(EXTENSION_BACKTOUCH)])
-      read_backTouch();
 #endif
     // powerSaver -> 4
     // other -> 5

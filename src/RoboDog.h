@@ -181,7 +181,7 @@ const uint8_t PWM_pin[PWM_NUM] = {
 #define ANALOG1 34
 #define ANALOG3 36
 #define ANALOG4 39
-#define BACKTOUCH_PIN 38
+
 #define VOICE_RX 26
 #define VOICE_TX 25
 #define UART_RX2 9
@@ -364,11 +364,7 @@ bool newBoard = false;
 #define EXTENSION_VOICE \
   'A'  // connect to Grove UART2 (on V0_*: a slide switch can choose the voice or the Grove), or UART1 (on V1). Hidden
        // on board.
-#define EXTENSION_DOUBLE_TOUCH 'T'  // connect to ANALOG1, ANALOG2
-#define EXTENSION_DOUBLE_LIGHT 'L'  // connect to ANALOG1, ANALOG2
-#define EXTENSION_DOUBLE_IR_DISTANCE 'D'  // connect to ANALOG3, ANALOG4
 #define EXTENSION_PIR 'I'  // connect to ANALOG3
-#define EXTENSION_BACKTOUCH 'B'  // connect to BACKTOUCH_PIN
 #define EXTENSION_ULTRASONIC 'U'  // connect to Grove UART2
 #define EXTENSION_GESTURE 'G'  // connect to Grove I2C
 #define EXTENSION_CAMERA 'C'  // connect to Grove I2C
@@ -478,19 +474,15 @@ float protectiveShift;  // reduce the wearing of the potentiometer
 int8_t moduleList[] = {
     EXTENSION_GROVE_SERIAL,
     EXTENSION_VOICE,
-    EXTENSION_DOUBLE_TOUCH,
-    EXTENSION_DOUBLE_LIGHT,
-    EXTENSION_DOUBLE_IR_DISTANCE,
     EXTENSION_PIR,
-    EXTENSION_BACKTOUCH,
     EXTENSION_ULTRASONIC,
     EXTENSION_GESTURE,
     EXTENSION_CAMERA,
     EXTENSION_QUICK_DEMO,
 };
 
-String moduleNames[] = {"Grove_Serial", "Voice",      "Double_Touch", "Double_Light ", "Double_IR_Distance ", "PIR",
-                        "BackTouch",    "Ultrasonic", "Gesture",      "Camera",        "Quick_Demo"};
+String moduleNames[] = {"Grove_Serial", "Voice",     "PIR",
+                         "Ultrasonic", "Gesture",      "Camera",        "Quick_Demo"};
 #ifdef NYBBLE
 bool moduleActivatedQ[] = {0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0};
 #else
@@ -630,7 +622,7 @@ void initRobot() {
 #else
   config.putBool("bootSndState", soundState);
 #endif
-  beep(20);
+  // beep(20);
 #ifdef VOLTAGE
   lowBattery();
 #endif

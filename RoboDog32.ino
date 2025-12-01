@@ -20,9 +20,6 @@
 #define VOICE                     // Petoi Grove voice module
 // #define ULTRASONIC                // for Petoi RGB ultrasonic distance sensor
 #define PIR                       // for PIR (Passive Infrared) sensor
-// #define DOUBLE_TOUCH              // for double touch sensor
-// #define DOUBLE_LIGHT              // for double light sensor
-// #define DOUBLE_INFRARED_DISTANCE  // for double distance sensor
 // #define GESTURE                   // for Gesture module
 // #define CAMERA                    // for Mu Vision camera
 #define QUICK_DEMO                // for quick demo
