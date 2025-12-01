@@ -38,10 +38,6 @@
 #include "backTouch.h"
 #endif
 
-#ifdef ROBOT_ARM
-#include "robotArm.h"
-#endif
-
 #ifdef OTHER_MODULES
 #endif
 

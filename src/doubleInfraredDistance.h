@@ -128,13 +128,8 @@ const float SIT_DERIV_THRESHOLD = 0.25;    // error-change threshold (cm/cycle)
 // Small-object/single-side "background hit" suppression
 const float BG_MARGIN = 3.0;               // safety margin for background threshold (cm)
 const float NEAR_SINGLE_DISTANCE = 25.0;   // near-side threshold (cm)
-#ifdef ROBOT_ARM
-const float SINGLE_STEP_SIT = 2;        // single-step (deg) in sit mode - ARM form
-const float SINGLE_STEP_WALK = 4;       // single-step (deg) in walk mode - ARM form
-#else
 const float SINGLE_STEP_SIT = 4;        // single-step (deg) in sit mode - non-ARM doubled (incl. Nybble/Bittle)
 const float SINGLE_STEP_WALK = 8;       // single-step (deg) in walk mode - non-ARM doubled (incl. Nybble/Bittle)
-#endif
 
 static inline float backgroundThreshold()
 {
@@ -542,9 +537,6 @@ void read_doubleInfraredDistance()
       // tQueue->addTask('i', "");
     }
   }
-#ifdef ROBOT_ARM
-
-#endif
   if (periodGlobal == 1)
   {
     distancePID(dL, dR);

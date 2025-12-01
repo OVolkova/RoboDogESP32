@@ -835,7 +835,6 @@ void getImuException() {
     } else if (xyzReal[2] < -1)
       imuException = IMU_EXCEPTION_FLIPPED;  // flipped
   }
-#ifndef ROBOT_ARM
   else if (ypr[1] < -50 || ypr[1] > 75)
     imuException = IMU_EXCEPTION_LIFTED;
   else if (!moduleDemoQ && fabs(xyzReal[2] - previousXYZ[2]) > thresZ * gFactor
@@ -850,7 +849,6 @@ void getImuException() {
                )) {
     imuException = IMU_EXCEPTION_PUSHED;
   }
-#endif
   // else if (  //keepDirectionQ &&
   //   fabs(previous_ypr[0] - ypr[0]) > 15 && fabs(fabs(ypr[0] - previous_ypr[0]) - 360) > 15)
   //   imuException = IMU_EXCEPTION_OFFDIRECTION;

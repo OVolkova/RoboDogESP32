@@ -31,18 +31,6 @@ String customizedCmdList[] = {
   "fr",  // replay skill learned with feedback servos
   "fF",  // movement follower demo with feedback servos
 #ifdef BITTLE
-#ifdef ROBOT_ARM
-  "kpickF",                          // pick front 捡起来
-  "kputD",                           // put down 放下
-  "khuntL",                          // hunt 捕猎
-  "kshowOff",                        // show off 展示
-  "kputL",                           // put left 收起来
-  "ktossL",                          // toss left 左抛
-  "klaunchL",                        // launch 发射
-  "kclapL",                          // clap 鼓掌
-  "ktossF",                          // toss front 前抛
-  "qc-2:0>kclap:1000>kpickF:1000>",  // calibrate arm (for QA) 校准(工厂用)
-#else
   "kpu1",                                                                  // single-handed pushups
   "m0 80 0 -80 0 0",                                                       // wave head
   "kmw",                                                                   // moonwalk
@@ -55,7 +43,6 @@ String customizedCmdList[] = {
   "8th",
   "9th",
   "10th"  // define up to 10 customized commands.
-#endif
 #elif defined NYBBLE
   "kluckyL",   // lucky cat 招财猫
   "klkPawsL",  // lick paws 舔爪子

@@ -107,22 +107,10 @@ String uniqueName = "";
 #include "InstinctNybbleESP.h"
 
 #elif defined BITTLE
-#ifdef ROBOT_ARM
-#define MODEL "Bittle X+Arm"
-#include "InstinctBittleESP_arm.h"
-#define REGULAR P1S
-#define KNEE P1S
-#elif defined VT
-#define MODEL "Bittle X+VT"
-#include "InstinctBittleESP_vt.h"
-#define REGULAR P1L
-#define KNEE P1L
-#else
 #define MODEL "Bittle X"
 #include "InstinctBittleESP.h"
 #define REGULAR P1L
 #define KNEE P1L
-#endif
 
 #define HEAD
 #define TAIL  // the robot arm's clip is assigned to the tail joint
@@ -350,7 +338,6 @@ bool newBoard = false;
 #define T_PAUSE 'p'  // pause
 #define T_POWER 'P'  // power, print the voltage
 #define T_TASK_QUEUE 'q'
-#define T_ROBOT_ARM 'R'
 #define T_SAVE 's'
 #define T_TILT 't'
 #define T_TEMP 'T'  // call the last skill data received from the serial port
@@ -564,11 +551,9 @@ int8_t rotationDirection[] = {1, -1, -1, 1, 1, -1, 1, -1, 1, -1, -1, 1, -1, 1, 1
 #ifdef BITTLE
 int angleLimit[][2] = {
     {-120, 120},
-#ifdef ROBOT_ARM
-    {-10, 180},
-#else
+
     {-85, 85},
-#endif
+
     {-120, 120}, {-120, 120},
 
     {-90, 60},   {-90, 60},   {-90, 90},  {-90, 90},
@@ -639,6 +624,12 @@ int balanceSlope[2] = {1, 1};  // roll, pitch
 #include "qualityAssurance.h"
 
 void initRobot() {
+  soundState = false;
+#ifdef I2C_EEPROM_ADDRESS
+  i2c_eeprom_write_byte(EEPROM_BOOTUP_SOUND_STATE, soundState);
+#else
+  config.putBool("bootSndState", soundState);
+#endif
   beep(20);
 #ifdef VOLTAGE
   lowBattery();

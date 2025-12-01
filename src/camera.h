@@ -103,11 +103,8 @@ int currentX = 0, currentY = 0;  // the current x y of the camera's direction in
 int8_t lensFactor, proportion, tranSpeed, pan, tilt, frontUpX, backUpX, frontDownX, backDownX, frontUpY, backUpY,
     frontDownY, backDownY, tiltBase, frontUp, backUp, frontDown, backDown;
 int8_t sizePars;
-#ifdef ROBOT_ARM
-float adjustmentFactor = 1.5;
-#else
+
 float adjustmentFactor = 1;
-#endif
 
 #ifdef NYBBLE
 int8_t nybblePars[] = {30, 11, 8, 10, 15, 60, -50, 31, -50, 45, -40, 40, -36, 0, 25, -60, 60, 16};

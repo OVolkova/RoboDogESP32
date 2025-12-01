@@ -180,14 +180,12 @@ void dealWithExceptions() {
       //   }
       // }
     } else {
-#ifndef ROBOT_ARM
       if (tQueue->cleared() && prev_imuException == IMU_EXCEPTION_LIFTED) {
         // strcpy(newCmd, "dropRec");
         // loadBySkillName(newCmd);
         // token = 'k';
         tQueue->addTask('k', "dropRec", 500);
       }
-#endif
       prev_imuException = imuException;
     }
   }
@@ -918,28 +916,6 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
                   }
                   servoCalib[target[0]] = target[1];
                 }
-#if defined ROBOT_ARM && defined GYRO_PIN
-                if (target[0] == -2)  // auto calibrate the robot arm's pincer
-                {
-                  // loadBySkillName("triStand");
-                  // shutServos();
-                  servoCalib[2] = -30;
-                  calibratedPWM(2, 0);
-                  calibratedPWM(1, 90);
-                  delay(500);
-                  int criticalAngle = calibratePincerByVibration(-25, 25, 4);
-                  criticalAngle = calibratePincerByVibration(criticalAngle - 4, criticalAngle + 4, 1);
-                  servoCalib[2] = servoCalib[2] + criticalAngle + 16;
-                  PTHL("Pincer calibrate angle: ", servoCalib[2]);
-#ifdef I2C_EEPROM_ADDRESS
-                  i2c_eeprom_write_byte(EEPROM_CALIB + 2, servoCalib[2]);
-#else
-                  config.putBytes("calib", servoCalib, DOF);
-#endif
-                  calibratedZeroPosition[2] = zeroPosition[2] + float(servoCalib[2]) * rotationDirection[2];
-                  loadBySkillName("calib");
-                } else
-#endif
                   if (target[0] < DOF && target[0] >= 0) {
                   int duty = zeroPosition[target[0]] + float(servoCalib[target[0]]) * rotationDirection[target[0]];
                   if (PWM_NUM == 12 && WALKING_DOF == 8 && target[0] > 3
