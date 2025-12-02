@@ -479,9 +479,6 @@ int balanceSlope[2] = {1, 1};  // roll, pitch
 #ifdef WEB_SERVER
 #include "webServer.h"
 #endif
-#ifdef NEOPIXEL_PIN
-#include "led.h"
-#endif
 #include "reaction.h"
 #include "qualityAssurance.h"
 
@@ -556,9 +553,6 @@ void initRobot() {
   for (byte i = 0; i < randomMindListLength; i++) {
     randomBase += choiceWeight[i];
   }
-#ifdef NEOPIXEL_PIN
-  ledSetup();
-#endif
 #ifdef PWM_LED_PIN
   pinMode(PWM_LED_PIN, OUTPUT);
 #endif
@@ -603,6 +597,6 @@ void initRobot() {
   }
 #endif
   PTL("Ready!");
-  beep(24, 50);
+  // beep(24, 50);
   idleTimer = millis();
 }

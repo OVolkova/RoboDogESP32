@@ -261,10 +261,6 @@ bool lowBattery() {
       //    strip.show();
       //       int8_t bStep = 1;
       //       for (byte brightness = 1; brightness > 0; brightness += bStep) {
-      // #ifdef NEOPIXEL_PIN
-      //         strip.setPixelColor(0, strip.Color(brightness, 0, 0));
-      //         strip.show();
-      // #endif
       // #ifdef PWM_LED_PIN
       // if (autoLedQ)
       //         analogWrite(PWM_LED_PIN, 255 - brightness);
@@ -950,7 +946,7 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
 #else
                     config.putChar("buzzerVolume", buzzerVolume);
 #endif
-                    playMelody(volumeTest, sizeof(volumeTest) / 2);
+                    // playMelody(volumeTest, sizeof(volumeTest) / 2);
                   }
                 } else if (inLen == 1) {                      // change the buzzer's volume
                   buzzerVolume = max(0, min(10, target[0]));  // in scale of 0~10
@@ -967,7 +963,7 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
                   PTF("Changing volume to ");
                   PT(buzzerVolume);
                   PTL("/10");
-                  playMelody(volumeTest, sizeof(volumeTest) / 2);
+                  // playMelody(volumeTest, sizeof(volumeTest) / 2);
                 } else if (target[1] > 0) {
                   beep(target[0], 1000 / target[1]);
                 }

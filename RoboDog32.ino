@@ -53,9 +53,6 @@ void loop() {
 
    //— action
    // playSound();
-#ifdef NEOPIXEL_PIN
-  playLight();
-#endif
   reaction();
 
 #ifdef WEB_SERVER
@@ -73,7 +70,7 @@ void quickDemo() {  // this is an example that use the analog input pin ANALOG1 
     PT("Reading on pin ANALOG1:\t");
     PTL(currentReading);
     if (currentReading < 50) {                                        // touch and hold on the A2 pin until the condition is met
-      tQueue->addTask(T_BEEP, "12 4 14 4 16 2");                      // make melody
+      // tQueue->addTask(T_BEEP, "12 4 14 4 16 2");                      // make melody
       tQueue->addTask(T_INDEXED_SEQUENTIAL_ASC, "0 30 0 -30", 1000);  // move the neck, left shoulder, right shoulder one by one
     } else if (abs(currentReading - prevReading) < 100) {
       if (strcmp(lastCmd, "sit"))
