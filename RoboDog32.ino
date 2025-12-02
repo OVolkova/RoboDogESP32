@@ -25,9 +25,6 @@ void setup() {
 }
 
 void loop() {
-#ifdef VOLTAGE
-  lowBattery();
-#endif
   //  //—self-initiative
   //  if (autoSwitch) { //the switch can be toggled on/off by the 'z' token
   //    randomMind();//allow the robot to auto rest and do random stuff in randomMind.h

@@ -49,14 +49,6 @@
     System default, nothing to declare!
 */
 
-/* BiBoard2
-  IMU_Int     27
-  BUZZER      14
-  VOLTAGE     4
-  RGB LED     15
-  GREEN-LED   5
-*/
-
 /*  Total DOF            Walking DOF
                    Nybble    Bittle    Cub
    BiBoard  (12)  skip 0~4  skip 0~4    12
@@ -232,7 +224,6 @@ bool newBoard = false;
 #define T_CPG 'r'      //Oscillator for Central Pattern Generator (ASCII)
 #define T_CPG_BIN 'Q'  //Oscillator for Central Pattern Generator (Binary)
 #define T_PAUSE 'p'  // pause
-#define T_POWER 'P'  // power, print the voltage
 #define T_TASK_QUEUE 'q'
 #define T_SAVE 's'
 #define T_TILT 't'
@@ -329,8 +320,6 @@ String webResponse = "";
 /*  These "Q" booleans are conditions that are checked to activate or deactivate different states.
     A condition set to true activates (turns on) a state.
 */
-bool lowBatteryQ = false;  // true = lowBattery() has determined that the battery voltage is below a threshold (see
-                           // above VOLTAGE macros).
 bool autoLedQ = false;
 bool updateGyroQ = true;
 bool fineAdjustQ = true;
@@ -490,9 +479,6 @@ void initRobot() {
   config.putBool("bootSndState", soundState);
 #endif
   // beep(20);
-#ifdef VOLTAGE
-  lowBattery();
-#endif
 
   Wire.begin();
   // #endif
@@ -556,15 +542,6 @@ void initRobot() {
 #ifdef PWM_LED_PIN
   pinMode(PWM_LED_PIN, OUTPUT);
 #endif
-  // #ifdef VOLTAGE
-  //   do {
-  //     PTL("Check battery. You can skip by entering any characters in the Serial Monitor.");
-  //     if (Serial.available()) {
-  //       Serial.read();  // allow breaking the loop with any serial input
-  //       break;
-  //     }
-  //   } while (lowBattery());  //if the battery is low
-  // #endif
 
 #ifdef IR_PIN
   irrecv.enableIRIn();

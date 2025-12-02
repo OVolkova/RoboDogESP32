@@ -610,9 +610,6 @@ void configSetup() {
     config.putBool("WifiManager", rebootForWifiManagerQ);  // default is false
 #endif
 #ifndef AUTO_INIT
-#ifdef VOLTAGE
-    if (!lowBatteryQ)  // won't play sound if only powered by USB. It avoid noise when developing codes
-#endif
       // playMelody(melodyInit, sizeof(melodyInit) / 2);
 #endif
 #ifndef AUTO_INIT
@@ -692,9 +689,6 @@ void configSetup() {
                                                               // namespace is opened.
 #endif
     PTHL("Default language: ", defaultLan == 'b' ? " Chinese" : " English");
-#ifdef VOLTAGE
-    if (!lowBatteryQ)  // won't play sound if only powered by USB. It avoid noise when developing codes
-#endif
       // playMelody(melodyNormalBoot, sizeof(melodyNormalBoot) / 2);
   }
 }
