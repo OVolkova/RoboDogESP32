@@ -199,7 +199,7 @@ public:
     PTL("MPU6050 calibration started");
     
     // wait for other I2C devices to be idle
-    while (imuLockI2c || gestureLockI2c) delay(1);
+    while (imuLockI2c) delay(1);
     
     PTLF("Calibrate MPU6050...");
     CalibrateAccel(20);
@@ -451,7 +451,7 @@ void calibrateICM() {
   PTL("ICM42670 calibration started");
   
   // wait for other I2C devices to be idle
-  while (imuLockI2c || gestureLockI2c) delay(1);
+  while (imuLockI2c) delay(1);
   
   PTLF("Calibrate ICM42670...");
   for (byte i = 0; i < 3; i++) {
@@ -621,26 +621,8 @@ bool readIMU() {
     // Use FreeRTOS delay function and add timeout mechanism
     unsigned long waitStart = millis();
     const unsigned long maxWaitTime = 500; // Maximum wait time 500ms
-    
-    while (cameraLockI2c && updateGyroQ) {
-      if (millis() - waitStart > maxWaitTime) {
-        PTLF("Camera I2C lock timeout");
-        return false; // Timeout exit
-      }
-      vTaskDelay(1 / portTICK_PERIOD_MS);  // Use FreeRTOS delay function
-    }
 #endif
     // Reuse existing timeout timer variable
-    waitStart = millis(); // Reset timeout timer
-    
-    while (gestureLockI2c && updateGyroQ) {
-      if (millis() - waitStart > maxWaitTime) {
-        PTLF("Gesture I2C lock timeout");
-        return false; // Timeout exit
-      }
-      vTaskDelay(1 / portTICK_PERIOD_MS);  // Use FreeRTOS delay function
-    }
-    
     waitStart = millis(); // Reset timer
     while (eepromLockI2c && updateGyroQ) {
       if (millis() - waitStart > maxWaitTime) {

@@ -2,14 +2,6 @@
 #include "voice.h"
 #endif
 
-#ifdef CAMERA
-#include "camera.h"
-#endif
-
-#ifdef GESTURE
-#include "gesture.h"
-#endif
-
 #ifdef PIR
 #include "pir.h"
 #endif
@@ -64,30 +56,7 @@ void initModule(char moduleCode) {
         break;
       }
 #endif
-#ifdef GESTURE
-    case EXTENSION_GESTURE:
-      {
-        loadBySkillName("sit");
-        gestureSetup();
-        break;
-      }
-#endif
-#ifdef CAMERA
-    case EXTENSION_CAMERA:
-      {
-        PTLF("Setting updateGyroQ to false...");
-        updateGyroQ = false;
-        i2cDetect(Wire);
 
-        loadBySkillName("sit");
-        if (!cameraSetup()) {
-          int i = indexOfModule(moduleCode);
-          PTHL("*** Fail to start ", moduleNames[i]);
-          successQ = false;
-        }
-        break;
-      }
-#endif
   }
   moduleActivatedQ[index] = successQ;
 }
@@ -113,31 +82,13 @@ void stopModule(char moduleCode) {
         break;
       }
 #endif
-#ifdef GESTURE
-    case EXTENSION_GESTURE:
-      {
-        gestureStop();
-        break;
-      }
-#endif
-#ifdef CAMERA
-    case EXTENSION_CAMERA:
-      {
-        // cameraStop();   // Todo
-        cameraSetupSuccessful = false;
-        cameraTaskActiveQ = 0;
-        break;
-      }
-#endif
   }
 }
 void showModuleStatus() {
   byte moduleCount = sizeof(moduleList) / sizeof(char);
   printListWithoutString((char *)moduleList, moduleCount);
   printListWithoutString(moduleActivatedQ, moduleCount);
-  moduleDemoQ = (moduleActivatedQfunction(EXTENSION_GESTURE)
-                 || moduleActivatedQfunction(EXTENSION_CAMERA)
-                 || moduleActivatedQfunction(EXTENSION_PIR));
+  moduleDemoQ = moduleActivatedQfunction(EXTENSION_PIR);
 }
 
 void reconfigureTheActiveModule(char *moduleCode) {
@@ -333,17 +284,7 @@ void readSignal() {
   else if (token != T_SERVO_CALIBRATE && token != T_SERVO_FOLLOW && token != T_SERVO_FEEDBACK && current - idleTimer > 0) {
     if (moduleIndex == -1)  // no active module
       return;
-#ifdef CAMERA
-    if (moduleActivatedQ[indexOfModule(EXTENSION_CAMERA)])
-      read_camera();
-#endif
-#ifdef GESTURE
-    if (moduleActivatedQ[indexOfModule(EXTENSION_GESTURE)])
-    {
-      gestureGetValue = read_gesture();
-      // PTHL("gestureValue02:", gestureGetValue);
-    }
-#endif
+
 #ifdef PIR
     if (moduleActivatedQ[indexOfModule(EXTENSION_PIR)])
       read_PIR();

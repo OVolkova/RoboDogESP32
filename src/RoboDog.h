@@ -250,13 +250,6 @@ bool newBoard = false;
   'A'  // connect to Grove UART2 (on V0_*: a slide switch can choose the voice or the Grove), or UART1 (on V1). Hidden
        // on board.
 #define EXTENSION_PIR 'I'  // connect to ANALOG3
-#define EXTENSION_GESTURE 'G'  // connect to Grove I2C
-#define EXTENSION_CAMERA 'C'  // connect to Grove I2C
-
-#define T_CAMERA_PRINT 'P'
-#define T_CAMERA_PRINT_OFF 'p'
-#define T_CAMERA_REACTION 'R'
-#define T_CAMERA_REACTION_OFF 'r'
 
 #define IMU_EXCEPTION_FLIPPED -1
 #define IMU_EXCEPTION_LIFTED -2
@@ -309,9 +302,6 @@ char terminator;
 long lastSerialTime = 0;
 String webResponse = "";
 
-#ifdef CAMERA
-// #define SENTRY2_CAMERA //This macro must be manually turned on if a Sentry2 is connected
-#endif
 
 /*  These "Q" booleans are conditions that are checked to activate or deactivate different states.
     A condition set to true activates (turns on) a state.
@@ -336,9 +326,7 @@ bool cmdFromWeb = false;
 bool interruptedDuringBehavior = false;
 bool autoSwitch = false;
 bool workingStiffness = true;
-bool cameraLockI2c = false;
 bool imuLockI2c = false;
-bool gestureLockI2c = false;
 bool eepromLockI2c = false;
 
 #define HEAD_GROUP_LEN 4  // used for controlling head pan, tilt, tail, and other joints independent from walking
@@ -356,12 +344,9 @@ int8_t moduleList[] = {
     EXTENSION_GROVE_SERIAL,
     EXTENSION_VOICE,
     EXTENSION_PIR,
-    EXTENSION_GESTURE,
-    EXTENSION_CAMERA,
 };
 
-String moduleNames[] = {"Grove_Serial", "Voice",     "PIR",
-                          "Gesture",      "Camera", };
+String moduleNames[] = {"Grove_Serial", "Voice",  "PIR", };
 
 bool moduleActivatedQ[] = {0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0};
 
