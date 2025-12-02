@@ -49,14 +49,6 @@
     System default, nothing to declare!
 */
 
-/* BiBoard2
-  IMU_Int     27
-  BUZZER      14
-  VOLTAGE     4
-  RGB LED     15
-  GREEN-LED   5
-*/
-
 /*  Total DOF            Walking DOF
                    Nybble    Bittle    Cub
    BiBoard  (12)  skip 0~4  skip 0~4    12
@@ -184,8 +176,6 @@ bool newBoard = false;
 #define T_SERVO_CALIBRATE \
   'c'  // send the robot to calibration posture for attaching legs and fine-tuning the joint offsets. c jointIndex1
        // offset1 jointIndex2 offset2 ... e.g. c0 7 1 -4 2 3 8 5
-#define T_COLOR \
-  'C'  // change the eye colors of the RGB ultrasonic sensor. a single 'C' will cancel the manual eye colors
 #define T_REST 'd'  // set the robot to rest posture and shut down all the servos. "d index" can turn off a single servo
 #define T_SERVO_FEEDBACK \
   'f'  // return the servo's position info if the chip supports feedback. e.g. f8 returns the 8th joint's position. A
@@ -232,7 +222,6 @@ bool newBoard = false;
 #define T_CPG 'r'      //Oscillator for Central Pattern Generator (ASCII)
 #define T_CPG_BIN 'Q'  //Oscillator for Central Pattern Generator (Binary)
 #define T_PAUSE 'p'  // pause
-#define T_POWER 'P'  // power, print the voltage
 #define T_TASK_QUEUE 'q'
 #define T_SAVE 's'
 #define T_TILT 't'
@@ -261,10 +250,8 @@ bool newBoard = false;
   'A'  // connect to Grove UART2 (on V0_*: a slide switch can choose the voice or the Grove), or UART1 (on V1). Hidden
        // on board.
 #define EXTENSION_PIR 'I'  // connect to ANALOG3
-#define EXTENSION_ULTRASONIC 'U'  // connect to Grove UART2
 #define EXTENSION_GESTURE 'G'  // connect to Grove I2C
 #define EXTENSION_CAMERA 'C'  // connect to Grove I2C
-#define EXTENSION_QUICK_DEMO 'Q'  // activate the quick demo at the end of OpenCatEsp32.ino
 
 #define T_CAMERA_PRINT 'P'
 #define T_CAMERA_PRINT_OFF 'p'
@@ -329,8 +316,6 @@ String webResponse = "";
 /*  These "Q" booleans are conditions that are checked to activate or deactivate different states.
     A condition set to true activates (turns on) a state.
 */
-bool lowBatteryQ = false;  // true = lowBattery() has determined that the battery voltage is below a threshold (see
-                           // above VOLTAGE macros).
 bool autoLedQ = false;
 bool updateGyroQ = true;
 bool fineAdjustQ = true;
@@ -371,14 +356,12 @@ int8_t moduleList[] = {
     EXTENSION_GROVE_SERIAL,
     EXTENSION_VOICE,
     EXTENSION_PIR,
-    EXTENSION_ULTRASONIC,
     EXTENSION_GESTURE,
     EXTENSION_CAMERA,
-    EXTENSION_QUICK_DEMO,
 };
 
 String moduleNames[] = {"Grove_Serial", "Voice",     "PIR",
-                         "Ultrasonic", "Gesture",      "Camera",        "Quick_Demo"};
+                          "Gesture",      "Camera", };
 
 bool moduleActivatedQ[] = {0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0};
 
@@ -479,9 +462,6 @@ int balanceSlope[2] = {1, 1};  // roll, pitch
 #ifdef WEB_SERVER
 #include "webServer.h"
 #endif
-#ifdef NEOPIXEL_PIN
-#include "led.h"
-#endif
 #include "reaction.h"
 #include "qualityAssurance.h"
 
@@ -493,9 +473,6 @@ void initRobot() {
   config.putBool("bootSndState", soundState);
 #endif
   // beep(20);
-#ifdef VOLTAGE
-  lowBattery();
-#endif
 
   Wire.begin();
   // #endif
@@ -556,21 +533,9 @@ void initRobot() {
   for (byte i = 0; i < randomMindListLength; i++) {
     randomBase += choiceWeight[i];
   }
-#ifdef NEOPIXEL_PIN
-  ledSetup();
-#endif
 #ifdef PWM_LED_PIN
   pinMode(PWM_LED_PIN, OUTPUT);
 #endif
-  // #ifdef VOLTAGE
-  //   do {
-  //     PTL("Check battery. You can skip by entering any characters in the Serial Monitor.");
-  //     if (Serial.available()) {
-  //       Serial.read();  // allow breaking the loop with any serial input
-  //       break;
-  //     }
-  //   } while (lowBattery());  //if the battery is low
-  // #endif
 
 #ifdef IR_PIN
   irrecv.enableIRIn();
@@ -603,6 +568,6 @@ void initRobot() {
   }
 #endif
   PTL("Ready!");
-  beep(24, 50);
+  // beep(24, 50);
   idleTimer = millis();
 }

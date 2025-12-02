@@ -96,7 +96,6 @@ void handleWebSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t 
 #ifdef CAMERA
 void sendCameraData(int xCoord, int yCoord, int width, int height);
 #endif
-void sendUltrasonicData(int distance);
 void clearWebTask(String taskId);
 void checkConnectionHealth();
 void sendSocketResponse(uint8_t clientId, String message);
@@ -222,28 +221,6 @@ void sendCameraData(int xCoord, int yCoord, int width, int height) {
   }
 }
 #endif
-
-// 发送超声波数据到所有连接的客户端
-void sendUltrasonicData(int distance) {
-  if (!webServerConnected || connectedClients.empty()) {
-    return;
-  }
-
-  JsonDocument ultrasonicDoc;
-  ultrasonicDoc["type"] = "event_us";
-  ultrasonicDoc["distance"] = distance;
-  ultrasonicDoc["timestamp"] = millis();
-
-  String ultrasonicData;
-  serializeJson(ultrasonicDoc, ultrasonicData);
-
-  // 向所有连接的客户端发送数据
-  for (auto &client : connectedClients) {
-    if (client.second) { // 如果客户端仍然连接
-      webSocket.sendTXT(client.first, ultrasonicData);
-    }
-  }
-}
 
 // WebSocket事件处理
 void handleWebSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length) {

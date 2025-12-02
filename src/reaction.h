@@ -220,110 +220,6 @@ void dealWithExceptions() {
 // V_real = V_read / vFactor, vFactor = 4096 / 3.3 / ratio
 // a more accurate fitting for V1_0 is V_real = V_read / 515 + 1.95
 
-#ifdef VOLTAGE
-bool lowBattery() {
-  long currentTime = millis() / CHECK_BATTERY_PERIOD;
-  if (currentTime > uptime) {
-    uptime = currentTime;
-    float voltage = analogRead(VOLTAGE);
-    voltage = voltage / 414;
-    if (voltage < NO_BATTERY_VOLTAGE2
-        || ((voltage < LOW_VOLTAGE2                                       // powered by 6V, voltage >= NO_BATTERY && voltage < LOW_VOLTAGE2
-             || (voltage > NO_BATTERY_VOLTAGE && voltage < LOW_VOLTAGE))  // powered by 7.4V
-            && fabs(voltage - lastVoltage) < 0.2)                         // not caused by power fluctuation during movements
-    ) {                                                                   // if battery voltage is low, it needs to be recharged
-      // give the robot a break when voltage drops after sprint
-      // adjust the thresholds according to your batteries' voltage
-      // if set too high, the robot will stop working when the battery still has power.
-      // If too low, the robot may not alarm before the battery shuts off
-      lowBatteryQ = true;
-      if (!safeRest) {
-        // shutServos();
-        // delay(2000);
-        strcpy(lastCmd, "rest");
-        loadBySkillName(lastCmd);
-        shutServos();
-        safeRest = true;
-      }
-      if (!batteryWarningCounter) {
-        PTF("Low power: ");
-        PT(voltage);
-        PTLF("V. The robot won't move.");
-        PTLF("Long-press the battery's button to turn it on!");
-#ifdef I2C_EEPROM_ADDRESS
-        if (i2c_eeprom_read_byte(EEPROM_BOOTUP_SOUND_STATE))
-#else
-        if (config.getBool("bootSndState", 1))
-#endif
-          playMelody(melodyLowBattery, sizeof(melodyLowBattery) / 2);
-      }
-      batteryWarningCounter = (batteryWarningCounter + 1) % BATTERY_WARNING_FREQ;
-      //    strip.show();
-      //       int8_t bStep = 1;
-      //       for (byte brightness = 1; brightness > 0; brightness += bStep) {
-      // #ifdef NEOPIXEL_PIN
-      //         strip.setPixelColor(0, strip.Color(brightness, 0, 0));
-      //         strip.show();
-      // #endif
-      // #ifdef PWM_LED_PIN
-      // if (autoLedQ)
-      //         analogWrite(PWM_LED_PIN, 255 - brightness);
-      // #endif
-      //         if (brightness == 255)
-      //           bStep = -1;
-      //         delay(5);
-      //       }
-      lastVoltage = voltage;
-      return true;
-    }
-    if (safeRest) {
-      // strcpy(lastCmd, "rest");
-      // loadBySkillName(lastCmd);
-      // shutServos();
-      safeRest = false;
-    }
-    lastVoltage = voltage;
-    if ((voltage > LOW_VOLTAGE + 0.2  // powered by 7.4V
-         || (voltage > LOW_VOLTAGE2 + 0.2
-             && voltage < NO_BATTERY_VOLTAGE))  // powered by 6V, voltage >= NO_BATTERY && voltage < LOW_VOLTAGE2
-        && lowBatteryQ)                         // +0.2 to avoid fluctuation around the threshold
-    {
-      // if (voltage > LOW_VOLTAGE + 0.2){
-      //   PT("Got ");
-      //   PT(voltage);
-      //   PTL(" V power");
-      // }
-      // else
-      //   PTL("Got 6.0 V power");
-      PT("Got ");
-      PT(voltage);
-      PTL(" V power");
-      playMelody(melodyOnBattery, sizeof(melodyOnBattery) / 2);
-      lowBatteryQ = false;
-      batteryWarningCounter = 0;
-      
-      // Reactivate PWM signals to fix servo non-responsiveness after battery power restoration
-      PTL("Reactivating servo PWM signals after power restoration...");
-#ifdef ESP_PWM
-      // Simply resend PWM signals for current positions
-      for (int c = 0; c < PWM_NUM; c++) {
-        servo[c].write(currentAng[c < 4 ? c : c + 4]);
-      }
-#else
-      // Resend PCA9685 PWM signals
-      for (int c = 0; c < PWM_NUM; c++) {
-        pwm.writeAngle(c, currentAng[c < 4 ? c : c + 4]);
-      }
-#endif
-      // Return to rest posture
-      strcpy(newCmd, "rest");
-      loadBySkillName(newCmd);
-    }
-  }
-  return false;
-}
-#endif
-
 void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever" loop() of OpenCatEsp32.ino
   if (newCmdIdx) {
     // PTLF("-----");
@@ -639,16 +535,6 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
             shutServos();
           break;
         }
-#ifdef VOLTAGE
-      case T_POWER:
-        {
-          float voltage = analogRead(VOLTAGE);
-          voltage = voltage / 414;
-          String message = "Voltage: ";
-          printToAllPorts(message + voltage + " V");
-          break;
-        }
-#endif
       case T_ACCELERATE:
         {
           runDelay = max(0, runDelay - 1);
@@ -696,21 +582,6 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
         //     playMelody(melody1, sizeof(melody1) / 2);
         //     break;
         //   }
-#ifdef ULTRASONIC
-      case T_COLOR:
-        {
-          if (!ultrasonicLEDinitializedQ)
-            rgbUltrasonicSetup();
-          if (cmdLen < 2)  // a single 'C' will turn off the manual color mode
-            manualEyeColorQ = false;
-          else {  // turn on the manual color mode
-            manualEyeColorQ = true;
-            ultrasonic.SetRgbEffect(E_RGB_INDEX(uint8_t(newCmd[3])), ultrasonic.color(newCmd[0], newCmd[1], newCmd[2]),
-                                    uint8_t(newCmd[4]));
-          }
-          break;
-        }
-#endif
       case ';':
         {
           setServoP(P_SOFT);
@@ -950,7 +821,7 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
 #else
                     config.putChar("buzzerVolume", buzzerVolume);
 #endif
-                    playMelody(volumeTest, sizeof(volumeTest) / 2);
+                    // playMelody(volumeTest, sizeof(volumeTest) / 2);
                   }
                 } else if (inLen == 1) {                      // change the buzzer's volume
                   buzzerVolume = max(0, min(10, target[0]));  // in scale of 0~10
@@ -967,7 +838,7 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
                   PTF("Changing volume to ");
                   PT(buzzerVolume);
                   PTL("/10");
-                  playMelody(volumeTest, sizeof(volumeTest) / 2);
+                  // playMelody(volumeTest, sizeof(volumeTest) / 2);
                 } else if (target[1] > 0) {
                   beep(target[0], 1000 / target[1]);
                 }
@@ -1103,8 +974,7 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
           // PTH("cmdLen = ", cmdLen);
           if (newCmd[0] == '?')
             showModuleStatus();
-          else if (newCmd[0] != 'U' || (newCmd[0] == 'U' && cmdLen == 1)) {  // when reading the distance from ultrasonic sensor, the cmdLen is 3.
-            // and we don't want to change the activation status of the ultrasonic sensor behavior
+          else { 
             reconfigureTheActiveModule(newCmd);
           }
 
@@ -1116,21 +986,6 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
                 set_voice(newCmd);
                 break;
               }
-#endif
-#ifdef ULTRASONIC
-      case EXTENSION_ULTRASONIC:
-      {
-        if (cmdLen >= 3)
-        {
-          int distance = readUltrasonic((int8_t)newCmd[1], (int8_t)newCmd[2]);
-          printToAllPorts('=');
-          printToAllPorts(distance);
-#ifdef WEB_SERVER
-          sendUltrasonicData(distance); // 发送超声波数据到WebSocket客户端
-#endif
-        }
-        break;
-      }
 #endif
 #ifdef CAMERA
             case EXTENSION_CAMERA:

@@ -13,9 +13,6 @@ void calibratedPWM(byte i, float angle, float speedRatio = 0) {
 
   for (int s = 0; s <= steps; s++) {
     int degree = duty + (steps == 0 ? 0 : (1 + cos(M_PI * s / steps)) / 2 * (duty0 - duty));
-#ifdef VOLTAGE
-    if (!lowBatteryQ)
-#endif
     {
 #ifdef ESP_PWM
       servo[actualServoIndex].write(degree);

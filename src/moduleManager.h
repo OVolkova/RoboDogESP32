@@ -6,10 +6,6 @@
 #include "camera.h"
 #endif
 
-#ifdef ULTRASONIC
-#include "ultrasonic.h"
-#endif
-
 #ifdef GESTURE
 #include "gesture.h"
 #endif
@@ -61,14 +57,6 @@ void initModule(char moduleCode) {
         break;
       }
 #endif
-#ifdef ULTRASONIC
-    case EXTENSION_ULTRASONIC:
-      {
-        loadBySkillName("sit");
-        rgbUltrasonicSetup();
-        break;
-      }
-#endif
 #ifdef PIR
     case EXTENSION_PIR:
       {
@@ -100,12 +88,6 @@ void initModule(char moduleCode) {
         break;
       }
 #endif
-#ifdef QUICK_DEMO
-    case EXTENSION_QUICK_DEMO:
-      {
-        break;
-      }
-#endif
   }
   moduleActivatedQ[index] = successQ;
 }
@@ -122,14 +104,6 @@ void stopModule(char moduleCode) {
     case EXTENSION_VOICE:
       {
         voiceStop();
-        break;
-      }
-#endif
-#ifdef ULTRASONIC
-    case EXTENSION_ULTRASONIC:
-      {
-        // ultrasonicStop();   // Todo
-        ultrasonicLEDinitializedQ = false;
         break;
       }
 #endif
@@ -155,12 +129,6 @@ void stopModule(char moduleCode) {
         break;
       }
 #endif
-#ifdef QUICK_DEMO
-    case EXTENSION_QUICK_DEMO:
-      {
-        break;
-      }
-#endif
   }
 }
 void showModuleStatus() {
@@ -169,9 +137,7 @@ void showModuleStatus() {
   printListWithoutString(moduleActivatedQ, moduleCount);
   moduleDemoQ = (moduleActivatedQfunction(EXTENSION_GESTURE)
                  || moduleActivatedQfunction(EXTENSION_CAMERA)
-                 || moduleActivatedQfunction(EXTENSION_PIR)
-                 // || moduleActivatedQfunction(EXTENSION_ULTRASONIC)
-                 || moduleActivatedQfunction(EXTENSION_QUICK_DEMO));
+                 || moduleActivatedQfunction(EXTENSION_PIR));
 }
 
 void reconfigureTheActiveModule(char *moduleCode) {
@@ -370,10 +336,6 @@ void readSignal() {
 #ifdef CAMERA
     if (moduleActivatedQ[indexOfModule(EXTENSION_CAMERA)])
       read_camera();
-#endif
-#ifdef ULTRASONIC
-    if (moduleActivatedQ[indexOfModule(EXTENSION_ULTRASONIC)])
-      read_RGBultrasonic();
 #endif
 #ifdef GESTURE
     if (moduleActivatedQ[indexOfModule(EXTENSION_GESTURE)])
