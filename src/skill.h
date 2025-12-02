@@ -158,21 +158,8 @@ public:
     }
     inplaceShift();
     periodGlobal = period;
-    // int len = abs(period) * frameSize;
-    // dutyAngles = new int8_t[len];
-    // for (int k = 0; k < abs(period); k++) {
-    //   for (int col = 0; col < frameSize; col++) {
-    //     if (WALKING_DOF == 12 && GAIT_ARRAY_DOF == 8 && period > 1)
-    //       if (col < 4)
-    //         dutyAngles[k * frameSize + col] = 0;
-    //       else
-    //         dutyAngles[k * frameSize + col] = int8_t(newCmd[skillHeader + k * GAIT_ARRAY_DOF + col - 4]);
-    //     else
-    //       dutyAngles[k * frameSize + col] = int8_t(newCmd[skillHeader + k * frameSize + col]);
-    //   }
-    // }
   }
-#define PRINT_SKILL_DATA
+
   void info() {
     PT("Skill Name: ");
     PTL(skillName);
@@ -191,7 +178,8 @@ public:
         PT(String((byte)loopCycle[i]) + ", ");
       PTL();
     }
-#ifdef PRINT_SKILL_DATA
+
+    // PRINT_SKILL_DATA
     int showRows = 1;
     for (int k = 0; k < abs(period); k++) {
       if (abs(period) <= showRows + 2 || k < showRows || k == abs(period) - 1) {
@@ -211,7 +199,7 @@ public:
           PTL();
       }
     }
-#endif
+
     PTL();
   }
   void mirror() {  // Create a mirror function to allow the robot to pick random directions of behaviors.
@@ -375,18 +363,12 @@ public:
 #endif
       for (int jointIndex = 0; jointIndex < DOF; jointIndex++) {
         //          PT(jointIndex); PT('\t');
-#ifndef HEAD
         if (jointIndex == 0)
           jointIndex = 2;
-#endif
-#ifndef TAIL
         if (jointIndex == 2)
           jointIndex = DOF - WALKING_DOF;
-#endif
-#if WALKING_DOF == 8
         if (jointIndex == 4)
           jointIndex = 8;
-#endif
         //          PT(jointIndex); PT('\t');
         float duty;
         if ((abs(period) > 1 && jointIndex < firstMotionJoint)      // gait and non-walking joints

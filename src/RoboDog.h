@@ -85,11 +85,6 @@ String uniqueName = "";
 #define REGULAR P1L
 #define KNEE P1L
 
-#define HEAD
-#define TAIL  // the robot arm's clip is assigned to the tail joint
-#define LL_LEG
-
-#define ESP_PWM
 #define PWM_NUM 12
 #define INTERRUPT_PIN 26  // use pin 2 on Arduino Uno & most boards
 #define BUZZER 25
@@ -223,7 +218,6 @@ bool newBoard = false;
 #define T_TILT 't'
 #define T_TEMP 'T'  // call the last skill data received from the serial port
 #define T_MEOW 'u'
-// #define T_SERVO_MICROSECOND 'w' // PWM width modulation
 #define T_WIFI_INFO 'w'
 // #define T_XLEG 'x'
 #define T_LEARN 'x'
@@ -393,14 +387,9 @@ int angleLimit[][2] = {
 };
 
 
-
-#ifdef X_LEG
-int currentAng[DOF] = {0, 0, 0, 0, 0, 0, 0, 0, 75, 75, -75, -75, -55, -55, 55, 55};
-int previousAng[DOF] = {0, 0, 0, 0, 0, 0, 0, 0, 75, 75, -75, -75, -55, -55, 55, 55};
-#else
 int currentAng[DOF] = {0, 0, 0, 0, 0, 0, 0, 0, 75, 75, 75, 75, -55, -55, -55, -55};
 int previousAng[DOF] = {0, 0, 0, 0, 0, 0, 0, 0, 75, 75, 75, 75, -55, -55, -55, -55};
-#endif
+
 int zeroPosition[DOF] = {};
 int calibratedZeroPosition[DOF] = {};
 
@@ -511,9 +500,6 @@ void initRobot() {
   for (byte i = 0; i < randomMindListLength; i++) {
     randomBase += choiceWeight[i];
   }
-#ifdef PWM_LED_PIN
-  pinMode(PWM_LED_PIN, OUTPUT);
-#endif
 
 #ifdef IR_PIN
   irrecv.enableIRIn();

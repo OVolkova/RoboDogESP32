@@ -227,10 +227,6 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
       autoSwitch = RANDOM_MIND;
       initialBoot = false;
     }
-#ifdef PWM_LED_PIN
-    if (autoLedQ)
-      digitalWrite(PWM_LED_PIN, HIGH);
-#endif
     if (token != T_REST && newCmdIdx < 5)
       idleTimer = millis();
     if (newCmdIdx < 5 && lowerToken != T_BEEP && token != T_MEOW && token != T_LISTED_BIN
@@ -240,10 +236,6 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
     if (!workingStiffness
         && (lowerToken == T_SKILL || lowerToken == T_INDEXED_SEQUENTIAL_ASC
             || lowerToken == T_INDEXED_SIMULTANEOUS_ASC)) {
-#ifdef T_SERVO_MICROSECOND
-      setServoP(P_WORKING);
-      workingStiffness = true;
-#endif
     }
     if ((lastToken == T_SERVO_CALIBRATE || lastToken == T_REST || lastToken == T_SERVO_FOLLOW || !strcmp(lastCmd, "fd"))
         && token != T_SERVO_CALIBRATE) {
@@ -256,18 +248,6 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
       tStep = 1;
       printToAllPorts('p');
     }
-#ifdef ESP_PWM
-    if (token != T_SERVO_FEEDBACK && token != T_SERVO_FOLLOW && measureServoPin != -1) {
-      for (byte i = 0; i < DOF; i++)
-        movedJoint[i] = 0;
-      reAttachAllServos();
-      measureServoPin = -1;
-      readFeedbackQ = false;    // This is the default value for this "Q" boolean condition with all tokens except (those
-                                // in the conditional && measureServoPin != -1)
-      followFeedbackQ = false;  // This is the default state for this "Q" boolean condition with all tokens except
-                                // (those in the conditional && measureServoPin != -1)
-    }
-#endif
 
     switch (token) {
       case T_HELP_INFO:
@@ -671,15 +651,9 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
                                         // the serial monitor)
       case T_INDEXED_SIMULTANEOUS_ASC:  // move multiple indexed joints to angles simultaneously (ASCII format entered
                                         // in the serial monitor)
-#ifdef T_SERVO_MICROSECOND
-      case T_SERVO_MICROSECOND:  // send pulse with unit of microsecond to a servo
-#endif
       case T_TILT:  // tilt the robot, format: t axis angle. 0:yaw, 1:pitch, 2:roll
       case T_MEOW:  // meow
       case T_BEEP:  // beep(tone, duration): tone 0 is pause, duration range is 0~255
-#ifdef T_TUNER
-      case T_TUNER:
-#endif
       case T_BALANCE_SLOPE:
         {
           if (token == T_INDEXED_SIMULTANEOUS_ASC && cmdLen == 0)
@@ -695,10 +669,6 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
             char *cmdForParsing = new char[cmdLen + 1];
             strcpy(cmdForParsing, newCmd);
             if (token == T_SERVO_CALIBRATE && lastToken != T_SERVO_CALIBRATE) {
-              #ifdef T_SERVO_MICROSECOND
-                                setServoP(P_HARD);
-                                workingStiffness = false;
-              #endif
               #ifdef VOICE
                                 if (newCmdIdx == 2) {  // only deactivate the voice module via serial port
               
@@ -755,29 +725,15 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
                 }
                   if (target[0] < DOF && target[0] >= 0) {
                   int duty = zeroPosition[target[0]] + float(servoCalib[target[0]]) * rotationDirection[target[0]];
-                  if (PWM_NUM == 12 && WALKING_DOF == 8 && target[0] > 3
-                      && target[0] < 8)  // there's no such joint in this configuration
+                  if (target[0] > 3 && target[0] < 8)  // there's no such joint in this configuration
                     continue;
                   int actualServoIndex = (PWM_NUM == 12 && target[0] > 3) ? target[0] - 4 : target[0];
-#ifdef ESP_PWM
                   servo[actualServoIndex].write(duty);
-#else
-                  pwm.writeAngle(actualServoIndex, duty);
-#endif
                 }
               } else if (token == T_INDEXED_SEQUENTIAL_ASC) {
                 transform(targetFrame, 1, 1);
                 delay(10);
               }
-#ifdef T_SERVO_MICROSECOND
-              else if (token == T_SERVO_MICROSECOND) {  // there might be some problems.
-#ifdef ESP_PWM
-                servo[PWM_pin[target[0]]].writeMicroseconds(target[1]);
-#else
-                pwm.writeMicroseconds(PWM_pin[target[0]], target[1]);
-#endif
-              }
-#endif
 #ifdef GYRO_PIN
               else if (token == T_TILT) {
                 yprTilt[target[0]] = target[1];
@@ -811,16 +767,6 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
                   beep(target[0], 1000 / target[1]);
                 }
               }
-#ifdef T_TUNER
-              else if (token == T_TUNER) {
-                if (inLen> 1) {
-                  *par[target[0]] = target[1];
-                  PT(target[0]);
-                  PT('\t');
-                  PTL(target[1]);
-                }
-              }
-#endif
               else if (token == T_BALANCE_SLOPE) {
                 if (inLen == 2) {
                   balanceSlope[0] = max(-2, min(2, target[0]));
@@ -838,16 +784,7 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
               printToAllPorts(range2String(DOF));
               printToAllPorts(list2String(servoCalib));
             }
-          
-#ifdef T_TUNER
-            if (token == T_TUNER) {
-              for (byte p = 0; p < sizePars; p++) {
-                PT(*par[p]);
-                PT('\t');
-              }
-              PTL();
-            }
-#endif
+        
             if ((token == T_INDEXED_SEQUENTIAL_ASC || token == T_INDEXED_SIMULTANEOUS_ASC)
                 && (nonHeadJointQ || lastToken != T_SKILL)) {
               // printToAllPorts(token);
@@ -1249,16 +1186,8 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
     finishWebCommand();
 #endif
     resetCmd();
-#ifdef PWM_LED_PIN
-    if (autoLedQ)
-      digitalWrite(PWM_LED_PIN, LOW);
-#endif
   }
   if (tolower(token) == T_SKILL) {
-#ifdef PWM_LED_PIN
-    if (autoLedQ)
-      analogWrite(PWM_LED_PIN, abs(currentAng[8]));
-#endif
     skill->perform();
     if (skill->period > 1) {
       delay(delayShort

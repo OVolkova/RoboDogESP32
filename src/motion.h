@@ -1,7 +1,7 @@
 void calibratedPWM(byte i, float angle, float speedRatio = 0) {
-  if (PWM_NUM == 12 && WALKING_DOF == 8 && i > 3 && i < 8)  // there's no such joint in this configuration
+  if (i > 3 && i < 8)  // there's no such joint in this configuration
     return;
-  int actualServoIndex = (PWM_NUM == 12 && i > 3) ? i - 4 : i;
+  int actualServoIndex = (i > 3) ? i - 4 : i;
   angle = max(float(angleLimit[i][0]), min(float(angleLimit[i][1]), angle));
   int duty0 = calibratedZeroPosition[i] + currentAng[i] * rotationDirection[i];
   previousAng[i] = currentAng[i];
@@ -14,11 +14,7 @@ void calibratedPWM(byte i, float angle, float speedRatio = 0) {
   for (int s = 0; s <= steps; s++) {
     int degree = duty + (steps == 0 ? 0 : (1 + cos(M_PI * s / steps)) / 2 * (duty0 - duty));
     {
-#ifdef ESP_PWM
       servo[actualServoIndex].write(degree);
-#else
-      pwm.writeAngle(actualServoIndex, degree);
-#endif
     }
     //    delayMicroseconds(1);
   }
@@ -170,16 +166,6 @@ void transform(T *target, byte angleDataRatio = 1, float speedRatio = 1, byte of
       }
 #endif
       for (byte i = offset; i < DOF; i++) {
-#ifdef ESP_PWM
-        if (movedJoint[i])  // don't drive the servo if it's being moved by hand in the follow function.
-          continue;
-        if (manualHeadQ && i < HEAD_GROUP_LEN && token == T_SKILL)  // the head motion will be handled by skill.perform()
-          continue;
-        if (WALKING_DOF == 8 && i > 3 && i < 8)
-          continue;
-        if (WALKING_DOF == 12 && i < 4)
-          continue;
-#endif
         float dutyAng = (target[i - offset] * angleDataRatio + (steps == 0 ? 0 : (1 + cos(M_PI * s / steps)) / 2 * diff[i - offset]));
         calibratedPWM(i, dutyAng);
       }
@@ -188,57 +174,6 @@ void transform(T *target, byte angleDataRatio = 1, float speedRatio = 1, byte of
     delete[] diff;
   }
 }
-
-// #define WEIGHT 2
-// template <typename T> void transform( T * target, byte angleDataRatio = 1, float speedRatio = 2, byte offset = 0) {  // transformCubic
-//   {
-
-//     int maxDiff = 0;
-//     T *nextFrame = target + DOF - offset;
-//     //svel: vel at the starting point of the interpolation.   evel: vel at the ending point.
-//     int *svel = new int [DOF - offset];
-//     int *evel = new int [DOF - offset];
-//     int *cAng_cp = new int [DOF];
-//     arrayNCPY(cAng_cp, currentAng, DOF);
-//     for (byte i = offset; i < DOF; i++) {
-//         if (WALKING_DOF == 8 && i > 3 && i < 8)
-//         continue;
-//         if (WALKING_DOF == 12 && i < 4)
-//         continue;
-//       maxDiff = max(maxDiff, abs( currentAng[i] - target[i - offset] * angleDataRatio));
-//       svel[i - offset] = (currentAng[i] - previousAng[i])/WEIGHT;
-//       evel[i - offset] = ((offset != 0) ? nextFrame[i - offset] * angleDataRatio - target[i - offset] * angleDataRatio : 0)/WEIGHT;
-//     }
-// //    printList(currentAng);
-// //    PTL();
-//     int steps = int(round(maxDiff / speedRatio )); //default speed is 1 degree per step
-//     //int steps = (offset!=0) ? 10:20;// interpolation points
-
-//     for (int s = 0; s < steps; s++) {
-//       for (int j = offset; j < DOF; j++) {
-
-//             if (WALKING_DOF == 8 && j > 3 && j < 8)
-//             continue;
-//             if (WALKING_DOF == 12 && j < 4)
-//             continue;
-
-//         ///////////////interpolation///////////////
-//         float A = (float)(svel[j - offset] + evel[j - offset])  / pow(steps, 2) - 2 * (target[j - offset] * angleDataRatio - cAng_cp[j]) / pow(steps, 3);
-//         float B = (float)(-2 * svel[j - offset]  - evel[j - offset] ) / steps + 3 * (target[j - offset] * angleDataRatio - cAng_cp[j]) / pow(steps, 2);
-//         float dutyAng = A * pow(s, 3) + B * pow(s, 2) + svel[j - offset]  * s + cAng_cp[j];
-
-//         calibratedPWM (j, dutyAng);
-//         delayMicroseconds(500);
-//       }
-// //      PTL();
-//     }
-// //    PTL();
-// //    printList(target);
-//     delete [] svel;
-//     delete [] evel;
-//     delete [] cAng_cp;
-//   }
-// }
 
 // balancing parameters
 #define ROLL_LEVEL_TOLERANCE 5  // the body is still considered as level, no angle adjustment
@@ -263,19 +198,11 @@ float levelTolerance[2] = { ROLL_LEVEL_TOLERANCE, PITCH_LEVEL_TOLERANCE };  // t
 #define FRONT_BACK_FACTOR 1.2
 #define POSTURE_WALKING_FACTOR 0.5
 #define ADJUSTMENT_DAMPER 5
-// #ifdef POSTURE_WALKING_FACTOR
-// float postureOrWalkingFactor = 1;
-// #endif
 
-#ifdef X_LEG  // >< leg
-float adaptiveParameterArray[][NUM_ADAPT_PARAM] = {
-  { -panF / 2, 0 }, { -panF / 2, -tiltF }, { -2 * panF, 0 }, { 0, -1 * tiltF }, { sRF, -sPF }, { -sRF, -sPF }, { -sRF, sPF }, { sRF, sPF }, { uRF, uPF }, { uRF, uPF }, { -uRF, uPF }, { -uRF, uPF }, { lRF, lPF }, { lRF, lPF }, { -lRF, lPF }, { -lRF, lPF }
-};
-#else  // >> leg
 float adaptiveParameterArray[][NUM_ADAPT_PARAM] = {
   { -panF / 2, 0 }, { panF / 8, -tiltF / 3 }, { 0, 0 }, { -1 * panF, 0 }, { sRF, -sPF }, { -sRF, -sPF }, { -sRF, sPF }, { sRF, sPF }, { uRF, uPF }, { uRF, uPF }, { uRF, uPF }, { uRF, uPF }, { lRF, -0.5 * lPF }, { lRF, -0.5 * lPF }, { lRF, 0.5 * lPF }, { lRF, 0.5 * lPF }
 };
-#endif
+
 
 float adjust(byte i, bool postureQ = false) {
   float rollAdj, pitchAdj;
