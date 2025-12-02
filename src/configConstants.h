@@ -33,28 +33,6 @@
 #include <Preferences.h>
 Preferences config;
 
-#define WIRE_BUFFER 30  // Arduino wire allows 32 byte buffer, with 2 byte for address.
-#define WIRE_LIMIT 16   // That leaves 30 bytes for data. use 16 to balance each writes
-#define PAGE_LIMIT 32   // AT24C32D 32-byte Page Write Mode. Partial Page Writes Allowed
-#define SIZE (65535 / 8)
-#define EEPROM_SIZE (65535 / 8)
-bool EEPROMOverflow = false;
-
-#define EEPROM_BIRTHMARK_ADDRESS 1     // avoid address 0, offset by 1. Using 0 will randomly reset the value when recalibrating IMU.
-#define EEPROM_MPU 2                   // 2x9 = 18 bytes
-#define EEPROM_ICM 20                  // 6x4 = 24 bytes (float values for ICM42670)
-#define EEPROM_CALIB 45                // 16 bytes
-#define EEPROM_DEVICE_NAME 61          // 20 bytes (shared by BLE, SSP, and WiFi)
-#define EEPROM_BOOTUP_SOUND_STATE 81   // 1 byte
-#define EEPROM_BUZZER_VOLUME 82        // 1 byte
-#define EEPROM_MODULE_ENABLED_LIST 83  // 9 bytes
-#define EEPROM_VERSION_DATE 95         // 11 bytes
-#define EEPROM_DEFAULT_LAN 107         // 1 byte. 0: English, 1: Chinese
-#define EEPROM_CURRENT_LAN 108         // 1 byte. 0: English, 1: Chinese
-#define EEPROM_WIFI_MANAGER 109        // 1 byte. 0: don't launch, 1: launch wifi manager
-#define EEPROM_RESERVED 110            // reserved for future use
-#define SERIAL_BUFF 120                // needs to be after all EEPROM definitions
-
 int dataLen(int8_t p) {
   byte skillHeader = p > 0 ? 4 : 7;
   int frameSize = p > 1 ? WALKING_DOF :  // gait
@@ -136,8 +114,7 @@ void i2cDetect(TwoWire &wirePort) {
   PTHL("MuQ", MuQ);
 }
 
-bool newBoardQ(unsigned int eeaddress = EEPROM_BIRTHMARK_ADDRESS) {
-// PTHL("birthmark:", char(i2c_eeprom_read_byte(eeaddress)));
+bool newBoardQ() {
   return config.getChar("birthmark") != BIRTHMARK;
 }
 
