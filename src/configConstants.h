@@ -136,340 +136,13 @@ void i2cDetect(TwoWire &wirePort) {
   PTHL("MuQ", MuQ);
 }
 
-#ifdef I2C_EEPROM_ADDRESS
-void i2c_eeprom_write_byte(unsigned int eeaddress, byte data) {
-  // wait for other I2C devices to release the bus
-  while (imuLockI2c)
-    delay(1);
-  eepromLockI2c = true;  // lock I2C bus for EEPROM operations
-  
-  int rdata = data;
-  Wire.beginTransmission(I2C_EEPROM_ADDRESS);
-  Wire.write((int)(eeaddress >> 8));    // MSB
-  Wire.write((int)(eeaddress & 0xFF));  // LSB
-  Wire.write(rdata);
-  Wire.endTransmission();
-  delay(5);  // needs 5ms for write
-  
-  eepromLockI2c = false;  // release I2C bus lock
-}
-
-byte i2c_eeprom_read_byte(unsigned int eeaddress) {
-  // wait for other I2C devices to release the bus
-  while (imuLockI2c)
-    delay(1);
-  eepromLockI2c = true;  // lock I2C bus for EEPROM operations
-  
-  byte rdata = 0xFF;
-  Wire.beginTransmission(I2C_EEPROM_ADDRESS);
-  Wire.write((int)(eeaddress >> 8));    // MSB
-  Wire.write((int)(eeaddress & 0xFF));  // LSB
-  Wire.endTransmission();
-  Wire.requestFrom(I2C_EEPROM_ADDRESS, 1);
-  if (Wire.available())
-    rdata = Wire.read();
-    
-  eepromLockI2c = false;  // release I2C bus lock
-  return rdata;
-}
-
-// This function will write a 2-byte integer to the EEPROM at the specified address and address + 1
-void i2c_eeprom_write_int16(unsigned int eeaddress, int16_t p_value) {
-  // wait for other I2C devices to release the bus
-  while (imuLockI2c)
-    delay(1);
-  eepromLockI2c = true;  // lock I2C bus for EEPROM operations
-  
-  byte lowByte = ((p_value >> 0) & 0xFF);
-  byte highByte = ((p_value >> 8) & 0xFF);
-  Wire.beginTransmission(I2C_EEPROM_ADDRESS);
-  Wire.write((int)(eeaddress >> 8));    // MSB
-  Wire.write((int)(eeaddress & 0xFF));  // LSB
-  Wire.write(lowByte);
-  Wire.write(highByte);
-  Wire.endTransmission();
-  delay(5);  // needs 5ms for write
-  
-  eepromLockI2c = false;  // release I2C bus lock
-
-  //  EEPROM.update(p_address, lowByte);
-  //  EEPROM.update(p_address + 1, highByte);
-}
-
-// This function will read a 2-byte integer from the EEPROM at the specified address and address + 1
-int16_t i2c_eeprom_read_int16(unsigned int eeaddress) {
-  // wait for other I2C devices to release the bus
-  while (imuLockI2c)
-    delay(1);
-  eepromLockI2c = true;  // lock I2C bus for EEPROM operations
-  
-  Wire.beginTransmission(I2C_EEPROM_ADDRESS);
-  Wire.write((int)(eeaddress >> 8));    // MSB
-  Wire.write((int)(eeaddress & 0xFF));  // LSB
-  Wire.endTransmission();
-  Wire.requestFrom(I2C_EEPROM_ADDRESS, 2);
-  byte lowByte = Wire.read();
-  byte highByte = Wire.read();
-  
-  eepromLockI2c = false;  // release I2C bus lock
-  return (int16_t((lowByte << 0) & 0xFF) + ((highByte << 8) & 0xFF00));
-}
-
-// This function will write a 4-byte float to the EEPROM at the specified address
-void i2c_eeprom_write_float(unsigned int eeaddress, float value) {
-  // wait for other I2C devices to release the bus
-  while (imuLockI2c)
-    delay(1);
-  eepromLockI2c = true;  // lock I2C bus for EEPROM operations
-  
-  union {
-    float f;
-    byte bytes[4];
-  } floatUnion;
-  floatUnion.f = value;
-
-  Wire.beginTransmission(I2C_EEPROM_ADDRESS);
-  Wire.write((int)(eeaddress >> 8));    // MSB
-  Wire.write((int)(eeaddress & 0xFF));  // LSB
-  for (int i = 0; i < 4; i++) {
-    Wire.write(floatUnion.bytes[i]);
-  }
-  Wire.endTransmission();
-  delay(5);  // needs 5ms for write
-  
-  eepromLockI2c = false;  // release I2C bus lock
-}
-
-// This function will read a 4-byte float from the EEPROM at the specified address
-float i2c_eeprom_read_float(unsigned int eeaddress) {
-  // wait for other I2C devices to release the bus
-  while (imuLockI2c)
-    delay(1);
-  eepromLockI2c = true;  // lock I2C bus for EEPROM operations
-  
-  union {
-    float f;
-    byte bytes[4];
-  } floatUnion;
-
-  Wire.beginTransmission(I2C_EEPROM_ADDRESS);
-  Wire.write((int)(eeaddress >> 8));    // MSB
-  Wire.write((int)(eeaddress & 0xFF));  // LSB
-  Wire.endTransmission();
-  Wire.requestFrom(I2C_EEPROM_ADDRESS, 4);
-  for (int i = 0; i < 4; i++) {
-    if (Wire.available())
-      floatUnion.bytes[i] = Wire.read();
-  }
-  
-  eepromLockI2c = false;  // release I2C bus lock
-  return floatUnion.f;
-}
-
-void i2c_eeprom_read_buffer(unsigned int eeaddress, byte *buffer, int length) {
-  Wire.beginTransmission(I2C_EEPROM_ADDRESS);
-  Wire.write((int)(eeaddress >> 8));    // MSB
-  Wire.write((int)(eeaddress & 0xFF));  // LSB
-  Wire.endTransmission();
-  Wire.requestFrom(I2C_EEPROM_ADDRESS, length);
-  int c = 0;
-  for (c = 0; c < length; c++) {
-    if (Wire.available())
-      buffer[c] = Wire.read();
-    //    PT((char)buffer[c]);
-  }
-}
-
-void writeLong(unsigned int eeAddress, char *data, int len) {
-  // byte locationInPage = eeAddress % PAGE_LIMIT;
-  if (eeAddress + len >= SIZE) {
-    PTL();
-    PTL("EEPROM overflow!\n");
-    beep(10, 100, 100, 5);
-    return;
-  }
-  i2c_eeprom_write_byte(eeAddress++, len);
-  //  PTL("write " + String(len) + " bytes");
-  int writtenToEE = 0;
-  while (len > 0) {
-    Wire.beginTransmission(I2C_EEPROM_ADDRESS);
-    Wire.write((int)((eeAddress) >> 8));  // MSB
-    Wire.write((int)((eeAddress) & 0xFF));  // LSB
-    //    PT("* current address: ");
-    //    PT((unsigned int)eeAddress);
-    //    PTL("\t0 1 2 3 4 5 6 7 8 9 a b c d e f ");
-    //    PT("\t\t\t\t");
-    byte writtenToWire = 0;
-    do {
-      //      PT(data[writtenToEE]);
-      //      PT(" ");
-      Wire.write((byte)data[writtenToEE]);
-      writtenToWire++;
-      writtenToEE++;
-      eeAddress++;
-      len--;
-    } while (len > 0 && (eeAddress % PAGE_LIMIT) && writtenToWire < WIRE_LIMIT);
-    Wire.endTransmission();
-    delay(6);  // needs 5ms for page write
-    //    PTL();
-    //    PTL("wrote " + String(writtenToWire) + " bytes.");
-  }
-  //  PTL("finish writing");
-}
-
-void readLong(unsigned int eeAddress, char *data) {
-  int len = i2c_eeprom_read_byte(eeAddress++);
-  PTL("read " + String(len) + " bytes");
-  int readFromEE = 0;
-  int readToWire = 0;
-
-  Wire.beginTransmission(I2C_EEPROM_ADDRESS);
-  Wire.write((int)((eeAddress) >> 8));  // MSB
-  Wire.write((int)((eeAddress) & 0xFF));  // LSB
-  Wire.endTransmission();
-  while (len > 0) {
-    Wire.requestFrom(I2C_EEPROM_ADDRESS, min(WIRE_BUFFER, len));
-    readToWire = 0;
-    do {
-      if (Wire.available())
-        data[readFromEE] = Wire.read();
-      PT((char)data[readFromEE]);
-      readFromEE++;
-    } while (--len > 0 && ++readToWire < WIRE_BUFFER);
-    PTL();
-  }
-  PTL("finish reading");
-}
-
-char *readLongByBytes(int address) {
-  int len = i2c_eeprom_read_byte(address);
-
-  // Check for invalid length (uninitialized EEPROM or corrupted data)
-  if (len < 0 || len > 50 || len == 255) {
-    // Return NULL to indicate invalid data, caller should handle this
-    return NULL;
-  }
-
-  char *id = new char[len + 1];
-  if (id == NULL) {
-    return NULL;
-  }
-
-  for (int i = 0; i < len; i++) {
-    id[i] = i2c_eeprom_read_byte(address + 1 + i);
-  }
-  id[len] = '\0';
-  return id;
-}
-
-void copydataFromBufferToI2cEeprom(unsigned int eeAddress, int8_t *newCmd) {
-  int len = dataLen(newCmd[0]) + 1;
-  if (eeAddress + len >= EEPROM_SIZE) {
-    PTL();
-    PTLF("I2C EEPROM overflow! Delete some skills!\n");
-    EEPROMOverflow = true;
-#ifdef BUZZER
-    beep(10, 100, 100, 2);
-#endif
-    return;
-  }
-  int writtenToEE = 0;
-  while (len > 0) {
-    Wire.beginTransmission(I2C_EEPROM_ADDRESS);
-    Wire.write((int)((eeAddress) >> 8));  // MSB
-    Wire.write((int)((eeAddress) & 0xFF));  // LSB
-    byte writtenToWire = 0;
-    do {
-      Wire.write((byte)newCmd[writtenToEE++]);
-      writtenToWire++;
-      eeAddress++;
-    } while ((--len > 0) && (eeAddress % PAGE_LIMIT)
-             && (writtenToWire < WIRE_LIMIT));  // be careful with the chained conditions
-    // self-increment may not work as expected
-    Wire.endTransmission();
-    delay(6);  // needs 5ms for page write
-    //    PTL("\nwrote " + String(writtenToWire) + " bytes.");
-  }
-  delay(6);
-  //  PTLF("finish copying to I2C EEPROM");
-}
-void loadDataFromI2cEeprom(unsigned int eeAddress) {
-  Wire.beginTransmission(I2C_EEPROM_ADDRESS);
-  Wire.write((int)((eeAddress) >> 8));  // MSB
-  Wire.write((int)((eeAddress) & 0xFF));  // LSB
-  Wire.endTransmission();
-  Wire.requestFrom((uint8_t)I2C_EEPROM_ADDRESS, (uint8_t)1);
-  newCmd[0] = Wire.read();
-  int bufferLen = dataLen(newCmd[0]);
-  //      int tail = bufferLen;
-  int readFromEE = 0;
-  int readToWire = 0;
-  while (bufferLen > 0) {
-    // PTL("request " + String(min(WIRE_BUFFER, len)));
-    Wire.requestFrom((uint8_t)I2C_EEPROM_ADDRESS, (uint8_t)min(WIRE_BUFFER, bufferLen));
-    readToWire = 0;
-    do {
-      if (Wire.available())
-        newCmd[1 + readFromEE++] = Wire.read();
-      //      PT( (int8_t)newCmd[readFromEE - 1]);
-      //      PT('\t');
-    } while (--bufferLen > 0 && ++readToWire < WIRE_BUFFER);
-    //    PTL();
-  }
-  //      newCmd[tail] = '\0';
-}
-
-// This function will write a 2-byte unsigned integer to the EEPROM at the specified address and address + 1
-// Used specifically for storing EEPROM addresses which range from 0-65535 and must be unsigned
-// to avoid negative value issues when address > 32767
-void i2c_eeprom_write_uint16(unsigned int eeaddress, uint16_t p_value) {
-  byte lowByte = ((p_value >> 0) & 0xFF);
-  byte highByte = ((p_value >> 8) & 0xFF);
-  Wire.beginTransmission(I2C_EEPROM_ADDRESS);
-  Wire.write((int)(eeaddress >> 8));    // MSB
-  Wire.write((int)(eeaddress & 0xFF));  // LSB
-  Wire.write(lowByte);
-  Wire.write(highByte);
-  Wire.endTransmission();
-  delay(5);  // needs 5ms for write
-}
-
-// This function will read a 2-byte unsigned integer from the EEPROM at the specified address and address + 1
-// Critical for reading EEPROM addresses correctly - prevents negative values when address > 32767
-// which would cause invalid memory access when cast to unsigned int
-uint16_t i2c_eeprom_read_uint16(unsigned int eeaddress) {
-  Wire.beginTransmission(I2C_EEPROM_ADDRESS);
-  Wire.write((int)(eeaddress >> 8));    // MSB
-  Wire.write((int)(eeaddress & 0xFF));  // LSB
-  Wire.endTransmission();
-  Wire.requestFrom(I2C_EEPROM_ADDRESS, 2);
-  byte lowByte = Wire.read();
-  byte highByte = Wire.read();
-  return (uint16_t((lowByte << 0) & 0xFF) + ((highByte << 8) & 0xFF00));
-}
-
-#endif
-
 bool newBoardQ(unsigned int eeaddress = EEPROM_BIRTHMARK_ADDRESS) {
 // PTHL("birthmark:", char(i2c_eeprom_read_byte(eeaddress)));
-#ifdef I2C_EEPROM_ADDRESS
-  // Use I2C lock to protect BIRTHMARK reading, avoid conflicts with other I2C operations
-  while (imuLockI2c) delay(1);
-  eepromLockI2c = true;
-  byte birthmarkValue = i2c_eeprom_read_byte(eeaddress);
-  eepromLockI2c = false;
-  return birthmarkValue != BIRTHMARK;
-#else
   return config.getChar("birthmark") != BIRTHMARK;
-#endif
 }
 
 void resetAsNewBoard(char mark) {
-#ifdef I2C_EEPROM_ADDRESS
-  i2c_eeprom_write_byte(EEPROM_BIRTHMARK_ADDRESS, mark);  // esp_random() % 128); //mark the board as uninitialized
-#else
   config.putChar("birthmark", mark);
-#endif
   PTL("Alter the birthmark for reset!");
   delay(5);
   ESP.restart();
@@ -494,30 +167,16 @@ void genBleID(int suffixDigits = 2) {
   }
   id[prelen + suffixDigits] = '\0';
 
-#ifdef I2C_EEPROM_ADDRESS
-      writeLong(EEPROM_DEVICE_NAME, id, prelen + suffixDigits);
-    char *temp = readLongByBytes(EEPROM_DEVICE_NAME);
-  if (temp != NULL) {
-    uniqueName = String(temp);
-    delete[] temp;
-  } else {
-    // EEPROM data is invalid (probably due to address change), use the generated ID
-    uniqueName = String(id);
-  }
-#else
   config.putString("ID", id);
   uniqueName = String(id);
-#endif
+
   PTL(uniqueName);
   delete[] id;
 }
 
 void customBleID(char *customName, int8_t len) {
-#ifdef I2C_EEPROM_ADDRESS
-      writeLong(EEPROM_DEVICE_NAME, customName, len + 1);
-#else
   config.putString("ID", customName);
-#endif
+
 }
 
 // Get device name with specified suffix using global uniqueName
@@ -530,18 +189,8 @@ char *getDeviceName(const char *suffix) {
 }
 
 void resetIfVersionOlderThan(String versionStr) {
-#ifdef I2C_EEPROM_ADDRESS
-  char *savedVersionDate = readLongByBytes(EEPROM_VERSION_DATE);
-
-  String savedVersionStr = (savedVersionDate && strlen(savedVersionDate) > 0) ? String(savedVersionDate) : "unknown";
-  long savedDate =
-      (savedVersionDate && strlen(savedVersionDate) >= 6) ? atoi(savedVersionDate + strlen(savedVersionDate) - 6) : 0;
-  if (savedVersionDate)
-    delete[] savedVersionDate;
-#else
   String savedVersionStr = config.getString("versionDate", "unknown");
   long savedDate = (savedVersionStr == "unknown") ? 0 : savedVersionStr.substring(savedVersionStr.length() - 6).toInt();
-#endif
   long currentDate = atol(versionStr.c_str() + versionStr.length() - 6);
   if (savedDate < currentDate) {
     delay(1000);
@@ -567,24 +216,6 @@ void configSetup() {
     genBleID();
 #endif
 
-#ifdef I2C_EEPROM_ADDRESS
-    PTL("Using constants from I2C EEPROM");
-    writeLong(EEPROM_VERSION_DATE, tempStr, SoftwareVersion.length());
-    i2c_eeprom_write_byte(EEPROM_BOOTUP_SOUND_STATE, soundState);
-    i2c_eeprom_write_byte(EEPROM_BUZZER_VOLUME, buzzerVolume);
-    for (byte i = 0; i < sizeof(moduleList) / sizeof(char); i++)
-      i2c_eeprom_write_byte(EEPROM_MODULE_ENABLED_LIST + i, moduleActivatedQ[i]);
-    i2c_eeprom_write_byte(EEPROM_DEFAULT_LAN, 'a');  // a for English, b for Chinese
-    i2c_eeprom_write_byte(EEPROM_CURRENT_LAN, 'b');  // a for English, b for Chinese
-    // save a preset skill to the temp skill in case its called before assignment
-    unsigned int i2cEepromAddress = SERIAL_BUFF + 2;  // + esp_random() % (EEPROM_SIZE - SERIAL_BUFF - 2 - 2550); //save
-                                                      // to random position to protect the EEPROM
-    // Use uint16 version to properly handle addresses > 32767 without sign extension issues
-    i2c_eeprom_write_uint16(SERIAL_BUFF, (uint16_t)i2cEepromAddress);  // the address takes 2 bytes to store
-    copydataFromBufferToI2cEeprom(i2cEepromAddress, (int8_t *)newCmd);
-    i2c_eeprom_write_byte(EEPROM_WIFI_MANAGER, rebootForWifiManagerQ);
-
-#else
     PTL("Using constants from on-board Flash");
     config.putString("versionDate", tempStr);
     config.putBool("bootSndState", soundState);
@@ -596,7 +227,7 @@ void configSetup() {
     config.putInt("tmpLen", bufferLen);
     config.putBytes("tmp", (int8_t *)newCmd, bufferLen);
     config.putBool("WifiManager", rebootForWifiManagerQ);  // default is false
-#endif
+
 #ifndef AUTO_INIT
       // playMelody(melodyInit, sizeof(melodyInit) / 2);
 #endif
@@ -608,63 +239,14 @@ void configSetup() {
 #else
     PTL("- Reset the joints' calibration offsets...");
 #endif
-#ifdef I2C_EEPROM_ADDRESS
-      for (byte c = 0; c < DOF; c++)
-        i2c_eeprom_write_byte(EEPROM_CALIB + c, 0);
-#else
     config.putBytes("calib", servoCalib, DOF);
-#endif
+
 #ifndef AUTO_INIT
     }
 #endif
   } else {
     resetIfVersionOlderThan(SoftwareVersion);
-#ifdef I2C_EEPROM_ADDRESS
-    soundState = i2c_eeprom_read_byte(EEPROM_BOOTUP_SOUND_STATE);
-    buzzerVolume = max(byte(0), min(byte(10), i2c_eeprom_read_byte(EEPROM_BUZZER_VOLUME)));
-    for (byte i = 0; i < sizeof(moduleList) / sizeof(char); i++)
-      moduleActivatedQ[i] = i2c_eeprom_read_byte(EEPROM_MODULE_ENABLED_LIST + i);
-    defaultLan = (char)i2c_eeprom_read_byte(EEPROM_DEFAULT_LAN);
-    currentLan = (char)i2c_eeprom_read_byte(EEPROM_CURRENT_LAN);
-    char *temp = readLongByBytes(EEPROM_DEVICE_NAME);
-    if (temp != NULL) {
-      uniqueName = String(temp);
-      delete[] temp;
-    } else {
-      // EEPROM data is invalid, generate a new ID following normal naming rules
-      const char *prefix = "Bittle"  ;
 
-      int prelen = strlen(prefix);
-      int suffixDigits = 2;
-
-      char *newId = new char[prelen + suffixDigits + 1];
-      if (newId != NULL) {
-        strcpy(newId, prefix);
-        for (int i = 0; i < suffixDigits; i++) {
-          int temp = esp_random() % 16;
-          sprintf(newId + prelen + i, "%X", temp);
-        }
-        newId[prelen + suffixDigits] = '\0';
-
-        // Save the new ID to EEPROM
-        writeLong(EEPROM_DEVICE_NAME, newId, prelen + suffixDigits);
-        uniqueName = String(newId);
-        delete[] newId;
-      } else {
-        // Memory allocation failed, use String-based fallback with random suffix
-        String randomSuffix = "";
-        for (int i = 0; i < suffixDigits; i++) {
-          int temp = esp_random() % 16;
-          String hexChar = String(temp, HEX);
-          hexChar.toUpperCase();
-          randomSuffix += hexChar;
-        }
-        uniqueName = String(prefix) + randomSuffix;
-      }
-    }
-    rebootForWifiManagerQ = i2c_eeprom_read_byte(EEPROM_WIFI_MANAGER);
-
-#else
     soundState = config.getBool("bootSndState") ? 1 : 0;
     buzzerVolume = max(byte(0), min(byte(10), (byte)config.getChar("buzzerVolume")));
     config.getBytes("moduleState", moduleActivatedQ, sizeof(moduleList) / sizeof(char));
@@ -675,20 +257,14 @@ void configSetup() {
     PT(config.freeEntries());                                 // show remaining entries of the preferences.
     PTL(" entries are available in the namespace table.\n");  // this method works regardless of the mode in which the
                                                               // namespace is opened.
-#endif
     PTHL("Default language: ", defaultLan == 'b' ? " Chinese" : " English");
       // playMelody(melodyNormalBoot, sizeof(melodyNormalBoot) / 2);
   }
 }
 
 void saveCalib(int8_t *var) {
-#ifndef I2C_EEPROM_ADDRESS
   config.putBytes("calib", var, DOF);
-#endif
   for (byte s = 0; s < DOF; s++) {
-#ifdef I2C_EEPROM_ADDRESS
-    i2c_eeprom_write_byte(EEPROM_CALIB + s, var[s]);
-#endif
     calibratedZeroPosition[s] = zeroPosition[s] + float(var[s]) * rotationDirection[s];
   }
 }
