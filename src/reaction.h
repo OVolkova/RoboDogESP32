@@ -977,7 +977,7 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
           signalGenerator(resolution, speed, pars + 2, inLen, 1);
           break;
         }
-#ifdef T_SERVO_FEEDBACK
+
       case T_SERVO_FOLLOW:
         {
           followFeedbackQ =
@@ -1049,7 +1049,7 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
           }
           break;
         }
-#endif
+
       case T_TEMP:
         {  // call the last skill data received from the serial port
           config.getBytes("tmp", newCmd, config.getBytesLength("tmp"));

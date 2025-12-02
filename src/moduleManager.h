@@ -6,9 +6,6 @@
 #include "pir.h"
 #endif
 
-#ifdef OTHER_MODULES
-#endif
-
 int8_t indexOfModule(char moduleName) {
   for (byte i = 0; i < sizeof(moduleList) / sizeof(char); i++)
     if (moduleName == moduleList[i])

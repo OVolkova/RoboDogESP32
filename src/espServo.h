@@ -72,10 +72,6 @@ void reAttachAllServos() {
 
 void servoSetup() {
   config.getBytes("calib", servoCalib, DOF);
-#ifdef INVERSE_SERVO_DIRECTION
-  for (byte s = 0; s < DOF; s++)
-    rotationDirection[s] *= -1;
-#endif
 
   PTL("Setup ESP32 PWM servo driver...");
   // Allow allocation of all timers
