@@ -255,7 +255,6 @@ bool newBoard = false;
 #define EXTENSION_ULTRASONIC 'U'  // connect to Grove UART2
 #define EXTENSION_GESTURE 'G'  // connect to Grove I2C
 #define EXTENSION_CAMERA 'C'  // connect to Grove I2C
-#define EXTENSION_QUICK_DEMO 'Q'  // activate the quick demo at the end of OpenCatEsp32.ino
 
 #define T_CAMERA_PRINT 'P'
 #define T_CAMERA_PRINT_OFF 'p'
@@ -363,11 +362,10 @@ int8_t moduleList[] = {
     EXTENSION_ULTRASONIC,
     EXTENSION_GESTURE,
     EXTENSION_CAMERA,
-    EXTENSION_QUICK_DEMO,
 };
 
 String moduleNames[] = {"Grove_Serial", "Voice",     "PIR",
-                         "Ultrasonic", "Gesture",      "Camera",        "Quick_Demo"};
+                         "Ultrasonic", "Gesture",      "Camera", };
 
 bool moduleActivatedQ[] = {0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0};
 

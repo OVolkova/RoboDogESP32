@@ -100,12 +100,6 @@ void initModule(char moduleCode) {
         break;
       }
 #endif
-#ifdef QUICK_DEMO
-    case EXTENSION_QUICK_DEMO:
-      {
-        break;
-      }
-#endif
   }
   moduleActivatedQ[index] = successQ;
 }
@@ -155,12 +149,6 @@ void stopModule(char moduleCode) {
         break;
       }
 #endif
-#ifdef QUICK_DEMO
-    case EXTENSION_QUICK_DEMO:
-      {
-        break;
-      }
-#endif
   }
 }
 void showModuleStatus() {
@@ -171,7 +159,7 @@ void showModuleStatus() {
                  || moduleActivatedQfunction(EXTENSION_CAMERA)
                  || moduleActivatedQfunction(EXTENSION_PIR)
                  // || moduleActivatedQfunction(EXTENSION_ULTRASONIC)
-                 || moduleActivatedQfunction(EXTENSION_QUICK_DEMO));
+                 );
 }
 
 void reconfigureTheActiveModule(char *moduleCode) {

@@ -10,7 +10,6 @@
 #define PIR                       // for PIR (Passive Infrared) sensor
 // #define GESTURE                   // for Gesture module
 // #define CAMERA                    // for Mu Vision camera
-#define QUICK_DEMO                // for quick demo
 
 #include "src/RoboDog.h"
 
@@ -25,12 +24,6 @@ void setup() {
 }
 
 void loop() {
-  //  //—self-initiative
-  //  if (autoSwitch) { //the switch can be toggled on/off by the 'z' token
-  //    randomMind();//allow the robot to auto rest and do random stuff in randomMind.h
-  //    powerSaver(POWER_SAVER);//make the robot rest after a certain period, the unit is seconds
-  //
-  //  }
   //  //— read environment sensors (low level)
   readEnvironment();  // update the gyro data
   //  //— special behaviors based on sensor events
@@ -39,17 +32,8 @@ void loop() {
     tQueue->popTask();
   } else {
     readSignal();
-#ifdef QUICK_DEMO
-    if (moduleList[moduleIndex] == EXTENSION_QUICK_DEMO)
-      quickDemo();
-#endif
-    // readHuman();
   }
-  //— generate behavior by fusing all sensors and instruction
-  // decision();
-
-   //— action
-   // playSound();
+  //— generate behavior
   reaction();
 
 #ifdef WEB_SERVER
@@ -57,26 +41,3 @@ void loop() {
 #endif
 }
 
-#ifdef QUICK_DEMO  // enter XQ in the serial monitor to activate the following section
-int prevReading = 0;
-void quickDemo() {  // this is an example that use the analog input pin ANALOG1 as a touch pad
-  // if the pin is not connected to anything, the reading will be noise
-  int currentReading = analogRead(ANALOG1);
-  if (abs(currentReading - prevReading) > 50)  // if the reading is significantly different from the previous reading
-  {
-    PT("Reading on pin ANALOG1:\t");
-    PTL(currentReading);
-    if (currentReading < 50) {                                        // touch and hold on the A2 pin until the condition is met
-      // tQueue->addTask(T_BEEP, "12 4 14 4 16 2");                      // make melody
-      tQueue->addTask(T_INDEXED_SEQUENTIAL_ASC, "0 30 0 -30", 1000);  // move the neck, left shoulder, right shoulder one by one
-    } else if (abs(currentReading - prevReading) < 100) {
-      if (strcmp(lastCmd, "sit"))
-        tQueue->addTask(T_SKILL, "sit", 1000);  // make the robot sit. more tokens are defined in OpenCat.h
-    } else {
-      if (strcmp(lastCmd, "up"))
-        tQueue->addTask(T_SKILL, "up", 1000);  // make the robot stand up. more tokens are defined in OpenCat.h
-    }
-  }
-  prevReading = currentReading;
-}
-#endif
