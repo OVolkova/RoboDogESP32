@@ -585,11 +585,8 @@ bool connectWifiFromStoredConfig()
 
 #ifdef WIFI_MANAGER
 void startWifiManager() {
-#ifdef I2C_EEPROM_ADDRESS
-  i2c_eeprom_write_byte(EEPROM_WIFI_MANAGER, false);
-#else
   config.putBool("WifiManager", false);
-#endif
+
 
   WiFiManager wm;
   wm.setConfigPortalTimeout(60);
@@ -611,11 +608,8 @@ void startWifiManager() {
     WEB_ERROR_F("Timeout: Fail to connect web server!");
   }
 
-#ifdef I2C_EEPROM_ADDRESS
-  i2c_eeprom_write_byte(EEPROM_WIFI_MANAGER, webServerConnected);
-#else
   config.putBool("WifiManager", webServerConnected);
-#endif
+
 }
 #endif
 

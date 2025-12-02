@@ -131,9 +131,6 @@ void reconfigureTheActiveModule(char *moduleCode) {
     stopModule(moduleList[i]);
     moduleActivatedQ[i] = false;
     statusChangedQ = true;
-#ifdef I2C_EEPROM_ADDRESS
-    i2c_eeprom_write_byte(EEPROM_MODULE_ENABLED_LIST + i, false);
-#endif
   }
 
   // Original logic: enable target module (skip for close-only operations)
@@ -142,18 +139,13 @@ void reconfigureTheActiveModule(char *moduleCode) {
       if (moduleList[i] == targetModule && !moduleActivatedQ[i]) {
         PTHL("+  enable", moduleNames[i]);
         moduleActivatedQ[i] = true;
-#ifdef I2C_EEPROM_ADDRESS
-        i2c_eeprom_write_byte(EEPROM_MODULE_ENABLED_LIST + i, true);
-#endif
         statusChangedQ = true;
       }
     }
   }
 
   if (statusChangedQ){  // if the status of the modules has changed, show the new status
-#ifndef I2C_EEPROM_ADDRESS
     config.putBytes("moduleState", moduleActivatedQ, sizeof(moduleList) / sizeof(char));
-#endif
     showModuleStatus();
     for (byte i = 0; i < sizeof(moduleList) / sizeof(char); i++) {
       if (moduleList[i] == targetModule && moduleActivatedQ[i]) {

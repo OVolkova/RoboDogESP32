@@ -65,13 +65,9 @@ void set_voice(char *cmd) {  // send some control command directly to the module
   if (cmd[1] == 'a' || cmd[1] == 'b') {  // enter "XAa" in the serial monitor or add button "X65,97" in the mobile app to switch to English
     // 在串口监视器输入指令“XAa”或在手机app创建按键"X65,97"来切换到英文
     defaultLan = cmd[1];
-#ifdef I2C_EEPROM_ADDRESS
-    i2c_eeprom_write_byte(EEPROM_DEFAULT_LAN, defaultLan);
-    i2c_eeprom_write_byte(EEPROM_CURRENT_LAN, currentLan);
-#else
     config.putChar("defaultLan", defaultLan);
     config.putChar("currentLan", currentLan);
-#endif
+
     PTHL("Default language: ", defaultLan == 'b' ? " Chinese" : " English");
   }
   byte c = 0;
@@ -117,11 +113,7 @@ void voiceSetup() {
     temp[2] = defaultLan;
     SERIAL_VOICE.println(temp);
     currentLan = defaultLan;
-#ifdef I2C_EEPROM_ADDRESS
-    i2c_eeprom_write_byte(EEPROM_CURRENT_LAN, currentLan);
-#else
     config.putChar("currentLan", currentLan);
-#endif
   }
 
   SERIAL_VOICE.println("XAc");
@@ -187,19 +179,11 @@ void read_voice() {
           {
             PTLF("Switch English");
             currentLan = 'a';
-#ifdef I2C_EEPROM_ADDRESS
-            i2c_eeprom_write_byte(EEPROM_CURRENT_LAN, 'a');
-#else
             config.putChar("currentLan", 'a');
-#endif
             if (lastToken == 'c') {  // only change the default language in calibration mode.
                                      //otherwise the language will roll back to default after reboot
               defaultLan = 'a';
-#ifdef I2C_EEPROM_ADDRESS
-              i2c_eeprom_write_byte(EEPROM_DEFAULT_LAN, 'a');
-#else
               config.putChar("defaultLan", 'a');
-#endif
               PTHL("Default language: ", defaultLan == 'b' ? " Chinese" : " English");
             }
             break;
@@ -208,18 +192,10 @@ void read_voice() {
           {
             PTLF("Switch Chinese");
             currentLan = 'b';
-#ifdef I2C_EEPROM_ADDRESS
-            i2c_eeprom_write_byte(EEPROM_CURRENT_LAN, 'b');
-#else
             config.putChar("currentLan", 'b');
-#endif
             if (lastToken == 'c') {
               defaultLan = 'b';
-#ifdef I2C_EEPROM_ADDRESS
-              i2c_eeprom_write_byte(EEPROM_DEFAULT_LAN, 'b');
-#else
               config.putChar("defaultLan", 'b');
-#endif
               PTHL("Default language: ", defaultLan == 'b' ? " Chinese" : " English");
             }
             break;

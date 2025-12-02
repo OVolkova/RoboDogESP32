@@ -204,29 +204,14 @@ public:
     PTLF("Calibrate MPU6050...");
     CalibrateAccel(20);
     CalibrateGyro(20);
-    
-#ifdef I2C_EEPROM_ADDRESS
-    PTL("Writing MPU6050 calibration data...");
-    
-    // exclusive mode for writing calibration data
-    eepromLockI2c = true;
-    
-    i2c_eeprom_write_int16(EEPROM_MPU, getXAccelOffset());
-    i2c_eeprom_write_int16(EEPROM_MPU + 2, getYAccelOffset());
-    i2c_eeprom_write_int16(EEPROM_MPU + 4, getZAccelOffset());
-    i2c_eeprom_write_int16(EEPROM_MPU + 6, getXGyroOffset());
-    i2c_eeprom_write_int16(EEPROM_MPU + 8, getYGyroOffset());
-    i2c_eeprom_write_int16(EEPROM_MPU + 10, getZGyroOffset());
-    
-    eepromLockI2c = false;
-#else
+
     config.putShort("mpu0", getXAccelOffset());
     config.putShort("mpu1", getYAccelOffset());
     config.putShort("mpu2", getZAccelOffset());
     config.putShort("mpu3", getXGyroOffset());
     config.putShort("mpu4", getYGyroOffset());
     config.putShort("mpu5", getZGyroOffset());
-#endif
+
     PrintActiveOffsets();
   }
   bool read_mpu6050() {
@@ -296,14 +281,11 @@ public:
     devStatus = dmpInitialize();
     PT("MPU offsets: ");
     for (byte m = 0; m < 6; m++) {
-#ifdef I2C_EEPROM_ADDRESS
-      mpuOffset[m] = i2c_eeprom_read_int16(EEPROM_MPU + m * 2);
-#else
       char key[8];
       sprintf(key, "mpu%d", m);
       // short takes two bytes on ESP32
       mpuOffset[m] = (int16_t)config.getShort(key);
-#endif
+
       PTT(mpuOffset[m], '\t');
     }
     PTL();
@@ -473,29 +455,14 @@ void calibrateICM() {
     while (Serial.available())
       Serial.read();
   }
-  
-#ifdef I2C_EEPROM_ADDRESS
-  PTL("Writing ICM42670 calibration data...");
-  
-  // exclusive mode for writing calibration data
-  eepromLockI2c = true;
-  
-  i2c_eeprom_write_float(EEPROM_ICM, icm.offset_accel[0]);
-  i2c_eeprom_write_float(EEPROM_ICM + 4, icm.offset_accel[1]);
-  i2c_eeprom_write_float(EEPROM_ICM + 8, icm.offset_accel[2]);
-  i2c_eeprom_write_float(EEPROM_ICM + 12, icm.offset_gyro[0]);
-  i2c_eeprom_write_float(EEPROM_ICM + 16, icm.offset_gyro[1]);
-  i2c_eeprom_write_float(EEPROM_ICM + 20, icm.offset_gyro[2]);
-  
-  eepromLockI2c = false;
-#else
+
   config.putFloat("icm_accel0", icm.offset_accel[0]);
   config.putFloat("icm_accel1", icm.offset_accel[1]);
   config.putFloat("icm_accel2", icm.offset_accel[2]);
   config.putFloat("icm_gyro0", icm.offset_gyro[0]);
   config.putFloat("icm_gyro1", icm.offset_gyro[1]);
   config.putFloat("icm_gyro2", icm.offset_gyro[2]);
-#endif
+
   PT("New ICM offsets: ");
   for (byte i = 0; i < 3; i++)
     PTT(icm.offset_accel[i], '\t');
@@ -511,19 +478,7 @@ void icm42670Setup(bool calibrateQ = true) {
   delay(10);
 
   bool hasCalibData = false;
-#ifdef I2C_EEPROM_ADDRESS
-  // Check if EEPROM has valid calibration data (non-zero values)
-  float testValue = i2c_eeprom_read_float(EEPROM_ICM);
-  if (testValue != 0.0 && !isnan(testValue)) {
-    icm.offset_accel[0] = i2c_eeprom_read_float(EEPROM_ICM);
-    icm.offset_accel[1] = i2c_eeprom_read_float(EEPROM_ICM + 4);
-    icm.offset_accel[2] = i2c_eeprom_read_float(EEPROM_ICM + 8);
-    icm.offset_gyro[0] = i2c_eeprom_read_float(EEPROM_ICM + 12);
-    icm.offset_gyro[1] = i2c_eeprom_read_float(EEPROM_ICM + 16);
-    icm.offset_gyro[2] = i2c_eeprom_read_float(EEPROM_ICM + 20);
-    hasCalibData = true;
-  }
-#else
+
   if (config.isKey("icm_accel0")) {
     icm.offset_accel[0] = config.getFloat("icm_accel0");
     icm.offset_accel[1] = config.getFloat("icm_accel1");
@@ -533,7 +488,7 @@ void icm42670Setup(bool calibrateQ = true) {
     icm.offset_gyro[2] = config.getFloat("icm_gyro2");
     hasCalibData = true;
   }
-#endif
+
 
   if (hasCalibData) {
     PT("Using ICM offsets: ");
