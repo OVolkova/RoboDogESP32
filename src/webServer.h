@@ -93,9 +93,6 @@ void completeWebTask();
 void errorWebTask(String errorMessage);
 void processNextWebTask();
 void handleWebSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length);
-#ifdef CAMERA
-void sendCameraData(int xCoord, int yCoord, int width, int height);
-#endif
 void clearWebTask(String taskId);
 void checkConnectionHealth();
 void sendSocketResponse(uint8_t clientId, String message);
@@ -194,33 +191,6 @@ void checkConnectionHealth() {
     }
   }
 }
-
-#ifdef CAMERA
-// 发送摄像头数据到所有连接的客户端
-void sendCameraData(int xCoord, int yCoord, int width, int height) {
-  if (!webServerConnected || connectedClients.empty()) {
-    return;
-  }
-
-  JsonDocument cameraDoc;
-  cameraDoc["type"] = "event_cam";
-  cameraDoc["x"] = xCoord - imgRangeX / 2.0;  // 与showRecognitionResult保持一致
-  cameraDoc["y"] = yCoord - imgRangeY / 2.0;  // 与showRecognitionResult保持一致
-  cameraDoc["width"] = width;
-  cameraDoc["height"] = height;
-  cameraDoc["timestamp"] = millis();
-
-  String cameraData;
-  serializeJson(cameraDoc, cameraData);
-
-  // 向所有连接的客户端发送数据
-  for (auto &client : connectedClients) {
-    if (client.second) { // 如果客户端仍然连接
-      webSocket.sendTXT(client.first, cameraData);
-    }
-  }
-}
-#endif
 
 // WebSocket事件处理
 void handleWebSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length) {

@@ -987,57 +987,6 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
                 break;
               }
 #endif
-#ifdef CAMERA
-            case EXTENSION_CAMERA:
-              {
-                char *option = newCmd;
-                while (*(++option) != '~') {
-                  if (*option == 'P')
-                    cameraPrintQ = 2;
-                  else if (*option == 'p')
-                    cameraPrintQ = 1;
-                  else if (*option == 'R')
-                    cameraReactionQ = true;
-                  else if (*option == 'r')
-                    cameraReactionQ = false;
-                }
-
-                if (cameraPrintQ == 1 && cameraTaskActiveQ) {
-                  printToAllPorts('=');
-                  showRecognitionResult(xCoord, yCoord, width, height);
-                  //PTL();
-                  // printToAllPorts(token);
-                  cameraPrintQ = 0;  // if the command is XCp, the camera will print the result only once
-                }
-
-                break;
-              }
-#endif
-#ifdef GESTURE
-            case EXTENSION_GESTURE:
-              {
-                char *option = newCmd;
-                while (*(++option) != '~') {
-                  if (*option == 'P')
-                    gesturePrintQ = 2;
-                  else if (*option == 'p')
-                    gesturePrintQ = 1;
-                  else if (*option == 'R')
-                    gestureReactionQ = true;
-                  else if (*option == 'r')
-                    gestureReactionQ = false;
-                }
-
-                if (gesturePrintQ == 1) {
-                  int readGesture = read_gesture();
-                  printToAllPorts('=');
-                  if (readGesture != GESTURE_NONE)
-                    printToAllPorts(readGesture);
-                  gesturePrintQ = 0;  // if the command is XGp, the gesture will print the detected result only once
-                }
-                break;
-              }
-#endif
           }
           break;
         }
@@ -1430,25 +1379,6 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
     servoFeedback(measureServoPin);
   // }
   else
-#ifdef GESTURE
-    if (gesturePrintQ == 2) {
-    if (gestureGetValue != GESTURE_NONE)
-      printToAllPorts(gestureGetValue);
-  }
-#endif
-#ifdef CAMERA
-  if (cameraPrintQ == 2 && cameraTaskActiveQ) {
-    if (xCoord != lastXcoord || yCoord != lastYcoord)
-    {
-      showRecognitionResult(xCoord, yCoord, width, height);
-#ifdef WEB_SERVER
-      sendCameraData(xCoord, yCoord, width, height); // Send camera data to WebSocket client
-#endif
-      lastXcoord = xCoord;
-      lastYcoord = yCoord;
-    }
-  } else if (!cameraTaskActiveQ)
-#endif
   {
     delay(1);  // avoid triggering WDT
   }
