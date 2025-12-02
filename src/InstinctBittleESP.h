@@ -1,4 +1,4 @@
-#define BITTLE
+
 //number of skills: 93
 
 const int8_t bdF[] PROGMEM = { 

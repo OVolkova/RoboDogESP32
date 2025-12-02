@@ -220,10 +220,8 @@ public:
     expectedRollPitch[0] = -expectedRollPitch[0];
     for (int k = 0; k < abs(period); k++) {
       if (period <= 1) {                                         // behavior
-        dutyAngles[k * frameSize] = -dutyAngles[k * frameSize];  // head and tail panning angles
-#ifndef ROBOT_ARM                                                // avoid mirroring the pincers' movements
+        dutyAngles[k * frameSize] = -dutyAngles[k * frameSize];  // head and tail panning angles                                              // avoid mirroring the pincers' movements
         dutyAngles[k * frameSize + 2] = -dutyAngles[k * frameSize + 2];
-#endif
       }
       for (byte col = (period > 1) ? 0 : 2; col < ((period > 1) ? WALKING_DOF : DOF) / 2; col++) {
         int8_t temp = dutyAngles[k * frameSize + 2 * col];
@@ -377,10 +375,6 @@ public:
 #endif
       for (int jointIndex = 0; jointIndex < DOF; jointIndex++) {
         //          PT(jointIndex); PT('\t');
-// #ifdef ROBOT_ARM
-//         if (abs(period) > 1 && jointIndex == 0)  //don't move the robot arm's joints for gaits
-//           jointIndex = 4;
-// #endif
 #ifndef HEAD
         if (jointIndex == 0)
           jointIndex = 2;
@@ -399,16 +393,9 @@ public:
             || (abs(period) == 1 && jointIndex < 4 && manualHeadQ)  // posture and head group and manually controlled head
         ) {
           if (!manualHeadQ && jointIndex < 4) {
-#ifndef ROBOT_ARM
             duty =
               (jointIndex != 1 ? offsetLR : 0)  // look left or right
               + 10 * sin(frame * (jointIndex + 2) * M_PI / abs(period));
-#else
-            if (jointIndex == 1 && strstr(skillName, "bk") != NULL)
-              duty = 50;
-            else
-              duty = 0;
-#endif
           } else
             duty = currentAng[jointIndex] + max(-20, min(20, (targetHead[jointIndex] - currentAng[jointIndex])));
           //  - gyroBalanceQ * currentAdjust[jointIndex];
@@ -453,28 +440,7 @@ Skill *skill;
 void loadBySkillName(const char *skillName) {  // get lookup information from on-board EEPROM and read the data array from storage
   char lr = skillName[strlen(skillName) - 1];
   int skillIndex;
-#ifdef ROBOT_ARM  // use the altered Arm gait
-  bool optimizedForArm = false;
-  char *nameStr = new char[strlen(skillName) + 4];
-  strcpy(nameStr, skillName);
-  if (lr == 'L' || lr == 'R' || lr == 'F' && strstr(nameStr, "Arm") == NULL) {  // try to find the arm version
-    // if the name contains L R F and doesn't contain "Arm"
-    nameStr[strlen(skillName) - 1] = '\0';  // remove the L R F in the end
-    strcat(nameStr, "Arm");                 // insert Arm
-    nameStr[strlen(skillName) + 2] = lr;    // append L R F
-    nameStr[strlen(skillName) + 3] = '\0';
-    // PTHL("mod ", nameStr);
-  }
-  skillIndex = skillList->lookUp(nameStr);
-  if (skillIndex != -1)
-    optimizedForArm = true;
-  else {
-    optimizedForArm = false;  // if there's no special skillname with Arm, use the original skill
-    skillIndex = skillList->lookUp(skillName);
-  }
-#else
   skillIndex = skillList->lookUp(skillName);
-#endif
   if (skillIndex != -1) {
     // if (skill != NULL)
     //   delete[] skill;
@@ -491,9 +457,6 @@ void loadBySkillName(const char *skillName) {  // get lookup information from on
     if (strcmp(newCmd, "calib") && skill->period == 1) {      // for static postures
       int8_t protectiveShift = esp_random() % 60 / 10.0 - 3;  // +- 3.0 degrees
       for (byte i = 0; i < DOF; i++)
-#ifdef ROBOT_ARM
-        if (i != 2)
-#endif
           skill->dutyAngles[i] += protectiveShift;  // add protective shift to reduce wearing at the same spot
     }
     // skill->info();
@@ -503,17 +466,9 @@ void loadBySkillName(const char *skillName) {  // get lookup information from on
     )
       skill->mirror();  // mirror the direction of a behavior
     coinFace = !coinFace;
-#ifdef ROBOT_ARM
-    if (skill->period == 1 && strcmp(newCmd, "calib")  // postures
-        || skill->period > 1 && !optimizedForArm)      // gaits
-      skill->shiftCenterOfMass(-10);
-#endif
     skill->transformToSkill(skill->nearestFrame());
-    // #ifdef NYBBLE
+
     for (byte i = 0; i < HEAD_GROUP_LEN; i++)
       targetHead[i] = currentAng[i] - currentAdjust[i];
-    // #endif
-    //    runDelay = delayMid + 2;
-    // skill->info();
   }
 }

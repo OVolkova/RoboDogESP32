@@ -44,11 +44,6 @@ extern bool cameraLockI2c;
 extern bool gestureLockI2c;
 extern bool eepromLockI2c;
 
-// #ifdef BiBoard_V1_0
-// #define USE_WIRE1  // use the Grove UART as the Wire1, which is independent of Wire used by the main devices, such as
-                   // the gyroscope and EEPROM.
-// #endif
-
 // #ifdef USE_WIRE1
 // #define CAMERA_WIRE Wire1
 // #else
@@ -103,15 +98,9 @@ int currentX = 0, currentY = 0;  // the current x y of the camera's direction in
 int8_t lensFactor, proportion, tranSpeed, pan, tilt, frontUpX, backUpX, frontDownX, backDownX, frontUpY, backUpY,
     frontDownY, backDownY, tiltBase, frontUp, backUp, frontDown, backDown;
 int8_t sizePars;
-#ifdef ROBOT_ARM
-float adjustmentFactor = 1.5;
-#else
-float adjustmentFactor = 1;
-#endif
 
-#ifdef NYBBLE
-int8_t nybblePars[] = {30, 11, 8, 10, 15, 60, -50, 31, -50, 45, -40, 40, -36, 0, 25, -60, 60, 16};
-#else  // BITTLE or CUB
+float adjustmentFactor = 1;
+
 #ifdef MU_CAMERA
 int8_t bittleMuPars[] = {30, 10, 8, 15, 15, 60, 80, 30, 80, 60, 30, 30, 70, 40, 40, 60, 40, -30};
 #endif
@@ -134,7 +123,6 @@ int8_t bittleGroveVisionPars[] = {20,
                                   60,
                                   40,
                                   -10};
-#endif
 #endif
 
 int8_t *par[] = {&lensFactor, &proportion, &tranSpeed, &pan,      &tilt,      &frontUpX,
@@ -167,10 +155,6 @@ bool cameraSetup() {
     return false;
   }
 
-#ifdef NYBBLE
-  initPars = nybblePars;
-  sizePars = sizeof(nybblePars) / sizeof(int8_t);
-#else  // BITTLE or CUB
 #ifdef MU_CAMERA
   sizePars = sizeof(bittleMuPars) / sizeof(int8_t);
   if (MuQ) {
@@ -187,8 +171,7 @@ bool cameraSetup() {
     imgRangeY = 240;
   }
 #endif
-#endif
-    
+
     // Acquire camera I2C lock and wait for other I2C operations to complete
 #ifndef USE_WIRE1
     cameraLockI2c = true;  // Signal that camera wants to use I2C bus

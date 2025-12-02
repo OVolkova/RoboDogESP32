@@ -5,9 +5,6 @@ ServoModel servoG41(180, SERVO_FREQ, 500, 2500);
 ServoModel servoP1S(290, SERVO_FREQ, 500, 2500);  // 1s/4 = 250ms 250ms/2500us=100Hz
 ServoModel servoP1L(270, SERVO_FREQ, 500, 2500);
 ServoModel servoP50(120, SERVO_FREQ, 900, 2100);
-#ifdef BiBoard2
-#include "pcaServo.h"
-#endif
 
 #define P_STEP 32
 #define P_BASE 3000 + 3 * P_STEP  // 3000~3320
@@ -271,11 +268,7 @@ bool servoFollow() {
     byte jointIdx = movedJointList[i];
     for (byte j = 0; j < 4; j++)
       if (j != jointIdx % 4) {
-        newCmd[(jointIdx / 4) * 4 + j] = currentAng[jointIdx]                      // >> leg
-#ifdef NYBBLE                                                                      // >< leg
-                                         * ((jointIdx % 4 / 2 == j / 2) ? 1 : -1)  //the front and back joints are symmetric
-#endif
-          ;
+        newCmd[(jointIdx / 4) * 4 + j] = currentAng[jointIdx] ;                     // >> leg
       } else {
         newCmd[jointIdx] = currentAng[jointIdx];
       }

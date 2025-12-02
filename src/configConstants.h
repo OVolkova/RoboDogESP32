@@ -494,15 +494,8 @@ The five boxing wizards jump quickly. Pack my box with five dozen liquor jugs.";
 // char data[]={16,-3,5,7,9};
 
 void genBleID(int suffixDigits = 2) {
-  const char *prefix =
-#ifdef BITTLE
-      "Bittle"
-#elif defined NYBBLE
-      "Nybble"
-#else
-      "Cub"
-#endif
-      ;
+  const char *prefix ="Bittle" ;
+
   int prelen = strlen(prefix);
 
   char *id = new char[prelen + suffixDigits + 1];
@@ -654,15 +647,8 @@ void configSetup() {
       delete[] temp;
     } else {
       // EEPROM data is invalid, generate a new ID following normal naming rules
-      const char *prefix =
-#ifdef BITTLE
-          "Bittle"
-#elif defined NYBBLE
-          "Nybble"
-#else
-          "Cub"
-#endif
-          ;
+      const char *prefix = "Bittle"  ;
+
       int prelen = strlen(prefix);
       int suffixDigits = 2;
 
