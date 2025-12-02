@@ -2,7 +2,7 @@
    Maximum bytes of I2C EEPROM is 65536 bit. i.e. address stops at 65535.
    Extra data will wrap over to address 0
 
-   If there's no I2C EEPROM, use ESP32's flash to simulate the EEPROM.
+   use ESP32's flash to simulate the EEPROM.
 
    Rongzhong Li
    September 2024

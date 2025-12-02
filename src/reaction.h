@@ -192,11 +192,7 @@ void dealWithExceptions() {
     if (digitalRead(0) != LOW)
       return;
 
-#ifdef I2C_EEPROM_ADDRESS
-    i2c_eeprom_write_byte(EEPROM_WIFI_MANAGER, true);
-#else
     config.putBool("WifiManager", true);  // default is false
-#endif
     PTLF("The robot will reboot and use Wifi manager.");
     PTLF("Hold the BOOT key and count down 10 if you want to clear the previous Wifi credentials.\n**********\n\n");
     int wifiCountdown = 10;
@@ -305,13 +301,7 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
               newCmd,
               cmdLen);  // customize the Bluetooth device's broadcast name. e.g. nMyDog will name the device as "MyDog"
                         // it takes effect the next time the board boosup. it won't interrupt the current connecton.
-          printToAllPorts(
-#ifdef I2C_EEPROM_ADDRESS
-            readLongByBytes(EEPROM_DEVICE_NAME)
-#else
-            config.getString("ID")
-#endif
-          );
+          printToAllPorts(config.getString("ID"));
           break;
         }
 #ifdef WEB_SERVER
@@ -345,11 +335,7 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
           {
 //            PTHL("Successfully connected Wifi to IP Address: ", WiFi.localIP());
             printToAllPorts("Successfully connected Wifi to IP Address: " + WiFi.localIP().toString());
-#ifdef I2C_EEPROM_ADDRESS
-                i2c_eeprom_write_byte(EEPROM_WIFI_MANAGER, true);
-#else
                 config.putBool("WifiManager", true);
-#endif
             PTLF("Rebooting to use web server.");
             delay(3000);
             ESP.restart();
@@ -607,11 +593,7 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
       case T_ABORT:
         {
           PTLF("aborted");
-#ifdef I2C_EEPROM_ADDRESS
-          i2c_eeprom_read_buffer(EEPROM_CALIB, (byte *)servoCalib, DOF);
-#else
           config.getBytes("calib", servoCalib, DOF);
-#endif
 #ifdef VOICE
           if (newCmdIdx == 2) {
             char setCmd[] = "Ac~";  // turn on voice
@@ -806,21 +788,12 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
               } else if (token == T_BEEP) {
                 if (inLen == 0) {  // toggle on/off the bootup melody
 
-#ifdef I2C_EEPROM_ADDRESS
-                  soundState = !i2c_eeprom_read_byte(EEPROM_BOOTUP_SOUND_STATE);
-                  i2c_eeprom_write_byte(EEPROM_BOOTUP_SOUND_STATE, soundState);
-#else
                   soundState = !config.getBool("bootSndState");
                   config.putBool("bootSndState", soundState);
-#endif
                   printToAllPorts(soundState ? "Unmute" : "Muted");
                   if (soundState && !buzzerVolume) {  // if i want to unmute but the volume was set to 0
                     buzzerVolume = 5;                 // set the volume to 5/10
-#ifdef I2C_EEPROM_ADDRESS
-                    i2c_eeprom_write_byte(EEPROM_BUZZER_VOLUME, buzzerVolume);
-#else
                     config.putChar("buzzerVolume", buzzerVolume);
-#endif
                     // playMelody(volumeTest, sizeof(volumeTest) / 2);
                   }
                 } else if (inLen == 1) {                      // change the buzzer's volume
@@ -828,13 +801,8 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
                   if (soundState ^ (buzzerVolume > 0))
                     printToAllPorts(buzzerVolume ? "Unmute" : "Muted");  // only print if the soundState changes
                   soundState = buzzerVolume;
-#ifdef I2C_EEPROM_ADDRESS
-                  i2c_eeprom_write_byte(EEPROM_BOOTUP_SOUND_STATE, soundState);
-                  i2c_eeprom_write_byte(EEPROM_BUZZER_VOLUME, buzzerVolume);
-#else
                   config.putBool("bootSndState", soundState);
                   config.putChar("buzzerVolume", buzzerVolume);
-#endif
                   PTF("Changing volume to ");
                   PT(buzzerVolume);
                   PTL("/10");
@@ -998,13 +966,8 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
       case T_BEEP_BIN:
         {
           if (cmdLen == 0) {  // toggle on/off the bootup melody
-#ifdef I2C_EEPROM_ADDRESS
-            soundState = !i2c_eeprom_read_byte(EEPROM_BOOTUP_SOUND_STATE);
-            i2c_eeprom_write_byte(EEPROM_BOOTUP_SOUND_STATE, soundState);
-#else
             soundState = !config.getBool("bootSndState");
             config.putBool("bootSndState", soundState);
-#endif
             printToAllPorts(soundState ? "Unmute" : "Muted");
           } else {
             for (byte b = 0; b < cmdLen / 2; b++) {
@@ -1152,13 +1115,7 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
 #endif
       case T_TEMP:
         {  // call the last skill data received from the serial port
-#ifdef I2C_EEPROM_ADDRESS
-          // Use uint16 version to prevent address corruption when reading values > 32767
-          // Ensures proper address range 0-65535 without negative value conversion issues
-          loadDataFromI2cEeprom((unsigned int)i2c_eeprom_read_uint16(SERIAL_BUFF));
-#else
           config.getBytes("tmp", newCmd, config.getBytesLength("tmp"));
-#endif
           skill->buildSkill();
           skill->transformToSkill(skill->nearestFrame());
           printToAllPorts(token);
@@ -1169,16 +1126,8 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
       case T_SKILL_DATA:  // takes in the skill array from the serial port, load it as a regular skill object and run it
                           // locally without continuous communication with the master
         {
-#ifdef I2C_EEPROM_ADDRESS
-          unsigned int i2cEepromAddress = SERIAL_BUFF + 2;  // + esp_random() % (EEPROM_SIZE - SERIAL_BUFF - 2 - 2550);
-                                                            // //save to random position to protect the EEPROM
-          // Use uint16 version to properly handle addresses > 32767 without sign extension issues
-          i2c_eeprom_write_uint16(SERIAL_BUFF, (uint16_t)i2cEepromAddress);  // the address takes 2 bytes to store
-          copydataFromBufferToI2cEeprom(i2cEepromAddress, (int8_t *)newCmd);
-#else
           int bufferLen = dataLen(newCmd[0]);
           config.putBytes("tmp", newCmd, bufferLen);
-#endif
           skill->buildSkill();
           skill->transformToSkill(skill->nearestFrame());
           manualHeadQ = false;

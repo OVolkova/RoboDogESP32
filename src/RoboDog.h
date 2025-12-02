@@ -67,10 +67,6 @@
 String SoftwareVersion = "";
 String uniqueName = "";
 
-// I2C EEPROM configuration - global setting for all boards
-// Uncomment the following line to enable I2C EEPROM storage instead of ESP32 Flash
-// #define I2C_EEPROM_ADDRESS 0x54  // Address of i2c eeprom chip
-
 #define BIRTHMARK '@'  // Send '!' token to reset the birthmark in the EEPROM so that the robot will know to restart and reset
 #define BT_BLE  // toggle Bluetooth Low Energy (BLE）
 #define BT_SSP  // toggle Bluetooth Secure Simple Pairing (BT_SSP)
@@ -452,11 +448,8 @@ int balanceSlope[2] = {1, 1};  // roll, pitch
 
 void initRobot() {
   soundState = false;
-#ifdef I2C_EEPROM_ADDRESS
-  i2c_eeprom_write_byte(EEPROM_BOOTUP_SOUND_STATE, soundState);
-#else
   config.putBool("bootSndState", soundState);
-#endif
+
   // beep(20);
 
   Wire.begin();
@@ -470,9 +463,9 @@ void initRobot() {
   printToAllPorts(SoftwareVersion);
   i2cDetect(Wire);
 
-#ifndef I2C_EEPROM_ADDRESS
+
   config.begin("config", false);  // false: read/write mode. true: read-only mode.
-#endif
+
   newBoard = newBoardQ();
   configSetup();
   PTF("Buzzer volume: ");
