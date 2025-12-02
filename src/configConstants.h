@@ -77,14 +77,13 @@ void i2cDetect(TwoWire &wirePort) {
             MuQ = true;  // The older Mu3 Camera and Sentry1 share the same address. Sentry is not supported yet.
           else if (i == 4)
             GroveVisionQ = true;
-#ifdef IMU_MPU6050
+
           else if (i == 5)
             mpuQ = true;
-#endif
-#ifdef IMU_ICM42670
+
           else if (i == 6)
             icmQ = true;
-#endif
+
           nDevices++;
           break;
         }

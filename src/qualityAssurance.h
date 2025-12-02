@@ -29,14 +29,13 @@ byte imuBad1[] = { 19, 17, 16, 14, 12,
 #ifdef GYRO_PIN
 void testIMU() {
   bool intendedIMU = false;
-#ifdef IMU_ICM42670
+
   if (icmQ)
     intendedIMU = true;
-#endif
-#ifdef IMU_MPU6050
+
   if (mpuQ)
     intendedIMU = true;
-#endif
+
   if (!intendedIMU) {
     PTL("\nNo intented IMU detected!");
     while (1) {

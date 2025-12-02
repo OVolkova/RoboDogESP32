@@ -99,8 +99,6 @@ String uniqueName = "";
 #define UART_RX2 16
 #define UART_TX2 17
 #define SERIAL_VOICE Serial2
-#define IMU_MPU6050
-#define IMU_ICM42670
 
 // L:Left-R:Right-F:Front-B:Back---LF, RF, RB, LB
 const uint8_t PWM_pin[PWM_NUM] = {
@@ -317,7 +315,6 @@ bool interruptedDuringBehavior = false;
 bool autoSwitch = false;
 bool workingStiffness = true;
 bool imuLockI2c = false;
-bool eepromLockI2c = false;
 
 #define HEAD_GROUP_LEN 4  // used for controlling head pan, tilt, tail, and other joints independent from walking
 int targetHead[HEAD_GROUP_LEN];
