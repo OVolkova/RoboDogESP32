@@ -176,8 +176,6 @@ bool newBoard = false;
 #define T_SERVO_CALIBRATE \
   'c'  // send the robot to calibration posture for attaching legs and fine-tuning the joint offsets. c jointIndex1
        // offset1 jointIndex2 offset2 ... e.g. c0 7 1 -4 2 3 8 5
-#define T_COLOR \
-  'C'  // change the eye colors of the RGB ultrasonic sensor. a single 'C' will cancel the manual eye colors
 #define T_REST 'd'  // set the robot to rest posture and shut down all the servos. "d index" can turn off a single servo
 #define T_SERVO_FEEDBACK \
   'f'  // return the servo's position info if the chip supports feedback. e.g. f8 returns the 8th joint's position. A
@@ -252,7 +250,6 @@ bool newBoard = false;
   'A'  // connect to Grove UART2 (on V0_*: a slide switch can choose the voice or the Grove), or UART1 (on V1). Hidden
        // on board.
 #define EXTENSION_PIR 'I'  // connect to ANALOG3
-#define EXTENSION_ULTRASONIC 'U'  // connect to Grove UART2
 #define EXTENSION_GESTURE 'G'  // connect to Grove I2C
 #define EXTENSION_CAMERA 'C'  // connect to Grove I2C
 
@@ -359,13 +356,12 @@ int8_t moduleList[] = {
     EXTENSION_GROVE_SERIAL,
     EXTENSION_VOICE,
     EXTENSION_PIR,
-    EXTENSION_ULTRASONIC,
     EXTENSION_GESTURE,
     EXTENSION_CAMERA,
 };
 
 String moduleNames[] = {"Grove_Serial", "Voice",     "PIR",
-                         "Ultrasonic", "Gesture",      "Camera", };
+                          "Gesture",      "Camera", };
 
 bool moduleActivatedQ[] = {0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0};
 

@@ -6,7 +6,6 @@
 
 // you can also activate the following modes by the 'X' token defined in src/OpenCat.h
 #define VOICE                     // Petoi Grove voice module
-// #define ULTRASONIC                // for Petoi RGB ultrasonic distance sensor
 #define PIR                       // for PIR (Passive Infrared) sensor
 // #define GESTURE                   // for Gesture module
 // #define CAMERA                    // for Mu Vision camera

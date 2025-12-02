@@ -582,21 +582,6 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
         //     playMelody(melody1, sizeof(melody1) / 2);
         //     break;
         //   }
-#ifdef ULTRASONIC
-      case T_COLOR:
-        {
-          if (!ultrasonicLEDinitializedQ)
-            rgbUltrasonicSetup();
-          if (cmdLen < 2)  // a single 'C' will turn off the manual color mode
-            manualEyeColorQ = false;
-          else {  // turn on the manual color mode
-            manualEyeColorQ = true;
-            ultrasonic.SetRgbEffect(E_RGB_INDEX(uint8_t(newCmd[3])), ultrasonic.color(newCmd[0], newCmd[1], newCmd[2]),
-                                    uint8_t(newCmd[4]));
-          }
-          break;
-        }
-#endif
       case ';':
         {
           setServoP(P_SOFT);
@@ -989,8 +974,7 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
           // PTH("cmdLen = ", cmdLen);
           if (newCmd[0] == '?')
             showModuleStatus();
-          else if (newCmd[0] != 'U' || (newCmd[0] == 'U' && cmdLen == 1)) {  // when reading the distance from ultrasonic sensor, the cmdLen is 3.
-            // and we don't want to change the activation status of the ultrasonic sensor behavior
+          else { 
             reconfigureTheActiveModule(newCmd);
           }
 
@@ -1002,21 +986,6 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
                 set_voice(newCmd);
                 break;
               }
-#endif
-#ifdef ULTRASONIC
-      case EXTENSION_ULTRASONIC:
-      {
-        if (cmdLen >= 3)
-        {
-          int distance = readUltrasonic((int8_t)newCmd[1], (int8_t)newCmd[2]);
-          printToAllPorts('=');
-          printToAllPorts(distance);
-#ifdef WEB_SERVER
-          sendUltrasonicData(distance); // 发送超声波数据到WebSocket客户端
-#endif
-        }
-        break;
-      }
 #endif
 #ifdef CAMERA
             case EXTENSION_CAMERA:
