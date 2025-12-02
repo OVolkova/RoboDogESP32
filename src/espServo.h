@@ -33,10 +33,7 @@ void attachAllESPServos() {
   for (int c = 0; c < PWM_NUM; c++) {
     byte s = c;  // attachOrder[c];
     int joint;
-    if (WALKING_DOF == 8)
-      joint = (s > 3) ? s + 4 : s;
-    else  // if (WALKING_DOF == 12)
-      joint = s + 4;
+    joint = (s > 3) ? s + 4 : s;
     switch (servoModelList[joint]) {
       case G41:
         modelObj[s] = &servoG41;
@@ -75,12 +72,7 @@ void reAttachAllServos() {
 
 void servoSetup() {
   config.getBytes("calib", servoCalib, DOF);
-#ifdef INVERSE_SERVO_DIRECTION
-  for (byte s = 0; s < DOF; s++)
-    rotationDirection[s] *= -1;
-#endif
 
-#ifdef ESP_PWM
   PTL("Setup ESP32 PWM servo driver...");
   // Allow allocation of all timers
   ESP32PWM::allocateTimer(0);
@@ -107,18 +99,12 @@ void servoSetup() {
   ** ledc: 15 => Group: 1, Channel: 7, Timer: 3
   */
   attachAllESPServos();
-#else
-  Serial.println("Set up PCA9685 PWM servo driver...");
-  pwm.begin();
-  pwm.setup(servoModelList);
-#endif
 }
 
 void shutServos(byte id = PWM_NUM) {
   // ServoModel *model;
   if (id == PWM_NUM) {
     for (byte s = 0; s < PWM_NUM; s++) {  // PWM_NUM
-#ifdef ESP_PWM
       /* the following method can shut down the servos.
        however, because a single Timer is divided to generate four PWMs, there's random noise when the PWM transits to zero.
        It will cause the servo to jump before shutdown.
@@ -126,45 +112,17 @@ void shutServos(byte id = PWM_NUM) {
       //    if (shutEsp32Servo)
       servo[s].writeMicroseconds(0);  // the joints may randomly jump when the signal goes to zero. the source is in hardware
                                       //     servo[s].detach(); //another way to turn off the servo
-                                      //     int joint;
-                                      //     if (WALKING_DOF == 8)
-                                      //       joint = ( s > 3) ? s + 4 : s;
-                                      //     else// if (WALKING_DOF == 12)
-                                      //       joint = s + 4;
-                                      //     switch (servoModelList[joint]) {
-                                      //       case G41:
-                                      //         model = &servoG41;
-                                      //         break;
-                                      //       case P1S:
-                                      //         model = &servoP1S;
-                                      //         break;
-                                      //       case P2K:
-                                      //         model = &servoP1L;
-                                      //         break;
-                                      //     }
-                                      //     servo[s].attach(PWM_pin[s], model);
-#else                                 // using PCA9685
-      pwm.setPWM(s, 0, 4096);
-#endif
     }
   } else {
     id = (PWM_NUM == 12 && id > 3) ? id - 4 : id;
-#ifdef ESP_PWM
     servo[id].writeMicroseconds(0);
-#else  // using PCA9685
-    pwm.setPWM(id, 0, 4096);
-#endif
   }
   //  shutEsp32Servo = false;
 }
 
 void setServoP(unsigned int p) {
   for (byte s = 0; s < PWM_NUM; s++)
-#ifdef ESP_PWM
     servo[s].writeMicroseconds(p);
-#else
-    pwm.writeMicroseconds(s, p);
-#endif
 }
 
 int measurePulseWidth(uint8_t pwmReadPin) {
@@ -311,11 +269,7 @@ void allRotate() {
   for (int pos = -50; pos < 50; pos += 1) {  // goes from 0 degrees to 180 degrees
     // in steps of 1 degree
     for (int s = 0; s < PWM_NUM; s++) {
-#ifdef ESP_PWM
       servo[s].write(pos);  // tell servo to go to position in variable 'pos'
-#else                       // BiBoard2
-      pwm.writeAngle(s, pos);
-#endif
       delay(1);  // waits 15ms for the servo to reach the position
       Serial.println(pos);
     }
@@ -323,11 +277,7 @@ void allRotate() {
   for (int pos = 50; pos > -50; pos -= 1) {  // goes from 0 degrees to 180 degrees
     // in steps of 1 degree
     for (int s = 0; s < PWM_NUM; s++) {
-#ifdef ESP_PWM
       servo[s].write(pos);  // tell servo to go to position in variable 'pos'
-#else                       // BiBoard2
-      pwm.writeAngle(s, pos);  // may go out of range. check!
-#endif
       delay(1);  // waits 15ms for the servo to reach the position
       Serial.println(pos);
     }
@@ -338,11 +288,7 @@ void allRotate() {
 
 void allRotateWithIMU() {
   for (int s = 0; s < PWM_NUM; s++) {
-#ifdef ESP_PWM
     servo[s].write(90 + ypr[1] + ypr[2]);  // tell servo to go to position in variable 'pos'
-#else                                      // BiBoard2
-    pwm.writeAngle(s, 90 + ypr[1] + ypr[2]);
-#endif
     //    delay(1);             // waits 15ms for the servo to reach the position
     Serial.print(ypr[1]);
     Serial.print('\t');

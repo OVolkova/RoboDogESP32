@@ -6,14 +6,6 @@
 #include "pir.h"
 #endif
 
-#ifdef OTHER_MODULES
-#endif
-
-#ifdef ALL_RANDOM
-#else
-// #define GYRO_PIN 0
-#endif
-
 int8_t indexOfModule(char moduleName) {
   for (byte i = 0; i < sizeof(moduleList) / sizeof(char); i++)
     if (moduleName == moduleList[i])
@@ -293,9 +285,7 @@ void readSignal() {
 
 // — read human sensors (top level) —
 void readHuman() {
-#ifdef TOUCH0
-  read_touch();
-#endif
+
 }
 // — generate behavior by fusing all sensors and instruction
 String decision() {
@@ -307,22 +297,7 @@ void read_sound() {
 
 void read_GPS() {
 }
-#ifdef TOUCH0
-void read_touch() {
-  byte touchPin[] = {
-    TOUCH0,
-    TOUCH1,
-    TOUCH2,
-    TOUCH3,
-  };
-  for (byte t = 0; t < 4; t++) {
-    int touchValue = touchRead(touchPin[t]);  // do something with the touch?
-    //    PT(touchValue);
-    //    PT('\t');
-  }
-  //  PTL();
-}
-#endif
+
 void readEnvironment() {
 #ifdef GYRO_PIN
   // if (updateGyroQ && !(frame % imuSkip))

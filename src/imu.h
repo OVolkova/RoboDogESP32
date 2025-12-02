@@ -29,7 +29,6 @@ int8_t yprTilt[3];
 float xyzReal[3];
 int thresX, thresY, thresZ;
 byte imuBad2[] = {20, 12, 18, 12, 16, 12, 16, 16, 16, 16, 16, 8};  // fail during calibration
-#ifdef IMU_MPU6050
 
 // I2C device class (I2Cdev) demonstration Arduino sketch for MPU6050 class using DMP (MotionApps v6.12)
 // 6/21/2012 by Jeff Rowberg <jeff@rowberg.net>
@@ -420,9 +419,11 @@ public:
 // AD0 high = 0x69
 mpu6050p mpu;
 // MPU6050 mpu(0x69); // <-- use for AD0 high
-#endif
 
-#ifdef IMU_ICM42670
+
+
+
+
 #include "icm42670/petoi_icm42670p.h"
 
 imu42670p icm(Wire, 1);
@@ -508,7 +509,6 @@ void icm42670Setup(bool calibrateQ = true) {
   }
   PTL();
 }
-#endif
 
 // ================================================================
 // ===                      INITIAL SETUP                       ===
@@ -519,7 +519,7 @@ void print6Axis() {
   if (!updateGyroQ)
     return;
   char buffer[50];  // Adjust buffer size as needed
-#ifdef IMU_ICM42670
+
   if (icmQ) {
 #ifdef PRINT_ACCELERATION
     sprintf(buffer, "ICM:%6.2f%6.2f%6.2f%7.1f%7.1f%7.1f\t",  //
@@ -529,8 +529,7 @@ void print6Axis() {
 #endif
     printToAllPorts(buffer, 0);
   }
-#endif
-#ifdef IMU_MPU6050
+
   if (mpuQ) {
 #ifdef PRINT_ACCELERATION
     sprintf(buffer, "MCU:%6.2f%6.2f%6.2f%7.1f%7.1f%7.1f",  // 7x6 = 42
@@ -540,28 +539,8 @@ void print6Axis() {
 #endif
     printToAllPorts(buffer, 0);
   }
-#endif
-  PTL();
 
-  //   PT_FMT(ypr[0], 2);
-  //   PT('\t');
-  //   PT_FMT(ypr[1], 2);
-  //   PT('\t');
-  //   PT_FMT(ypr[2], 2);
-  // #ifdef PRINT_ACCELERATION
-  //   PT("\t");
-  //   // PT(aaWorld.x);
-  //   // PT("\t");
-  //   // PT(aaWorld.y);
-  //   PT(*xyzReal[0]);  // x is along the longer direction of the robot
-  //   PT("\t");
-  //   PT(*xyzReal[1]);
-  //   PT('\t');
-  //   PT(*xyzReal[2]);
-  //   PT("\t");
-  //   PT(aaWorld.z);
-  // #endif
-  //   PTL();
+  PTL();
 }
 
 TaskHandle_t TASK_imu = NULL;
@@ -579,13 +558,6 @@ bool readIMU() {
 #endif
     // Reuse existing timeout timer variable
     waitStart = millis(); // Reset timer
-    while (eepromLockI2c && updateGyroQ) {
-      if (millis() - waitStart > maxWaitTime) {
-        PTLF("EEPROM I2C lock timeout");
-        return false; // Timeout exit
-      }
-      vTaskDelay(1 / portTICK_PERIOD_MS);  // Use FreeRTOS delay function
-    }
     
     // If updateGyroQ became false during waiting, exit early
     if (!updateGyroQ) {
@@ -599,7 +571,6 @@ bool readIMU() {
       return false;
     }
     
-#ifdef IMU_ICM42670
     if (icmQ) {
       updated = true;
       icm.getImuGyro();
@@ -613,8 +584,7 @@ bool readIMU() {
       // Negate yaw to match polar coordinate convention (positive = counterclockwise)
       ypr[0] = -ypr[0];
     }
-#endif
-#ifdef IMU_MPU6050
+
     // if programming failed, don't try to do anything
     // read a packet from FIFO
     if (mpuQ) {
@@ -626,7 +596,7 @@ bool readIMU() {
       // Negate yaw to match polar coordinate convention (positive = counterclockwise)
       ypr[0] = -ypr[0];
     }
-#endif
+
     imuLockI2c = false;
     return updated;
   } else {
@@ -888,16 +858,15 @@ void imuSetup() {
 #endif
     beep(15, 500, 500, 1);
   }
-#ifdef IMU_MPU6050
+
   if (mpuQ) {
     mpu.mpu6050Setup(calibrateQ);
   }
-#endif
-#ifdef IMU_ICM42670
+
   if (icmQ) {
     icm42670Setup(calibrateQ);
   }
-#endif
+
   if (calibrateQ)
     beep(18, 50, 50, 6);
   previous_ypr[0] = ypr[0];
@@ -938,15 +907,13 @@ void taskCalibrateImuUsingCore0(void *parameter) {
   // ulTaskNotifyTake(pdTRUE, portMAX_DELAY);  // Wait for notification from Core 1
   //                                           // Received notification so do task work
   
-#ifdef IMU_MPU6050
   if (mpuQ) {
     printToAllPorts("\n\t*** Current IMU Offsets ***");  // Show current offsets before doing the calibration
     mpu.PrintActiveOffsets();
     printToAllPorts("\n\t*** Calibrating Now ***\n");
     mpu.calibrateMPU();
   }
-#endif
-#ifdef IMU_ICM42670
+
   // IMU_ICM42670 lacks PrintActiveOffsets() method so need to do this piecemeal
   if (icmQ) {
     icm.getOffset(200);
@@ -979,7 +946,7 @@ void taskCalibrateImuUsingCore0(void *parameter) {
     printToAllPorts("\nCalibrating...\n");
     calibrateICM();
   }
-#endif
+
   
   // Loop to resume waiting
   // }

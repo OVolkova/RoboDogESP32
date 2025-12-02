@@ -1,10 +1,8 @@
 // modify the model and board definitions
 //***********************
 
-// Send '!' token to reset the birthmark in the EEPROM so that the robot will restart to reset
 // #define AUTO_INIT  //activate it to automatically reset joint and imu calibration without prompts
 
-// you can also activate the following modes by the 'X' token defined in src/OpenCat.h
 #define VOICE                     // Petoi Grove voice module
 #define PIR                       // for PIR (Passive Infrared) sensor
 
@@ -15,8 +13,7 @@ void setup() {
   Serial.begin(115200);  // USB serial
   Serial.setTimeout(SERIAL_TIMEOUT);
   // Serial1.begin(115200); //second serial port
-  while (Serial.available() && Serial.read())
-    ;  // empty buffer
+  while (Serial.available() && Serial.read());  // empty buffer
   initRobot();
 }
 
