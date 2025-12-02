@@ -843,7 +843,6 @@ void taskCalibrateImuUsingCore0(void *parameter);  // Forward declaration -ee-
 
 void imuSetup() {
   if (newBoard) {
-#ifndef AUTO_INIT
     PTL("- Calibrate the Inertial Measurement Unit (IMU)? (Y/n): ");
     char choice = getUserInputChar();
     PTL(choice);
@@ -853,9 +852,6 @@ void imuSetup() {
       PTLF("\nPut the robot FLAT on the table and don't touch it during calibration.");
       beep(8, 500, 500, 5);
     }
-#else
-    calibrateQ = true;
-#endif
     beep(15, 500, 500, 1);
   }
 

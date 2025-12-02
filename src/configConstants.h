@@ -204,22 +204,14 @@ void configSetup() {
     config.putBytes("tmp", (int8_t *)newCmd, bufferLen);
     config.putBool("WifiManager", rebootForWifiManagerQ);  // default is false
 
-#ifndef AUTO_INIT
-      // playMelody(melodyInit, sizeof(melodyInit) / 2);
-#endif
-#ifndef AUTO_INIT
+    // playMelody(melodyInit, sizeof(melodyInit) / 2);
     PTL("- Reset the joints' calibration offsets? (Y/n): ");
     char choice = getUserInputChar();
     PTL(choice);
     if (choice == 'Y' || choice == 'y') {
-#else
-    PTL("- Reset the joints' calibration offsets...");
-#endif
     config.putBytes("calib", servoCalib, DOF);
-
-#ifndef AUTO_INIT
     }
-#endif
+
   } else {
     resetIfVersionOlderThan(SoftwareVersion);
 

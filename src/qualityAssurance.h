@@ -160,12 +160,11 @@ void testDcDc() {
 void QA() {
   if (newBoard) {
     config.putBool("bootSndState", 1);
-#ifndef AUTO_INIT
     PTL("Run factory quality assurance program? (Y/n)");
     char choice = getUserInputChar(5);  // auto skip in 5 seconds
     PTL(choice);
     if (choice == 'Y' || choice == 'y')
-#endif
+
     {
 #ifdef GYRO_PIN
       testIMU();

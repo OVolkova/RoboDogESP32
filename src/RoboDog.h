@@ -55,15 +55,12 @@
    BiBoard2 (16)  skip 0~8  skip 0~8  skip0~4
 */
 
-// #define RevB
-#define RevDE
 #define SERIAL_TIMEOUT 10  // 5 may cut off the message
 #define SERIAL_TIMEOUT_LONG 200
 
 #define BOARD "B02"
-
-
 #define DATE "251121"  // YYMMDD
+
 String SoftwareVersion = "";
 String uniqueName = "";
 

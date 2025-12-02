@@ -1,8 +1,6 @@
 // modify the model and board definitions
 //***********************
 
-// #define AUTO_INIT  //activate it to automatically reset joint and imu calibration without prompts
-
 #define VOICE                     // Petoi Grove voice module
 #define PIR                       // for PIR (Passive Infrared) sensor
 
