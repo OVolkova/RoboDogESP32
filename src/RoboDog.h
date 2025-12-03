@@ -216,7 +216,6 @@ bool newBoard = false;
 #define T_WIFI_INFO 'w'
 // #define T_XLEG 'x'
 #define T_LEARN 'x'
-#define T_RANDOM_MIND 'z'  // toggle random behaviors
 
 #define T_READ 'R'  // read pin     R
 #define T_WRITE 'W'  // write pin                      W
@@ -309,7 +308,6 @@ bool cmdFromWeb = false;
 
 // Other booleans
 bool interruptedDuringBehavior = false;
-bool autoSwitch = false;
 bool workingStiffness = true;
 bool imuLockI2c = false;
 
@@ -420,7 +418,6 @@ int balanceSlope[2] = {1, 1};  // roll, pitch
 #endif
 #include "espServo.h"
 #include "motion.h"
-#include "randomMind.h"
 #include "skill.h"
 #include "moduleManager.h"
 #ifdef WEB_SERVER
@@ -491,9 +488,6 @@ void initRobot() {
   newCmd[0] = '\0';
   skill = new Skill();
   skillList = new SkillList();
-  for (byte i = 0; i < randomMindListLength; i++) {
-    randomBase += choiceWeight[i];
-  }
 
 #ifdef IR_PIN
   irrecv.enableIRIn();

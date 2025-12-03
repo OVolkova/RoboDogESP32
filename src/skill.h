@@ -24,10 +24,6 @@ public:
       SkillPreview *tempAddress = new SkillPreview(s);
       this->push_back(tempAddress);
     }
-    //  PTF("free memory: ");//before building the skill list
-    //  PTL(ESP.getFreeHeap());
-    for (randomMindListLength = 0; randomMindList[randomMindListLength] != NULL; randomMindListLength++)
-      ;
   }
   int lookUp(const char *key) {
     byte nSkills = sizeof(progmemPointer) / MEMORY_ADDRESS_SIZE;
@@ -40,20 +36,13 @@ public:
       char readNameLR = readName[strlen(readName) - 1];
       if (s == randSkillIdx) {
         bool forbiddenQ = false;
-        for (int i = 0; i < sizeof(forbiddenSkills) / sizeof(String); i++) {
-          if (forbiddenSkills[i] == readName) {
-            forbiddenQ = true;
-            break;
-          }
-        }
         if (readNameLR == 'L' || readNameLR == 'F' || forbiddenQ) {  // forbid walking or violent motions in random mode
           randSkillIdx++;
           continue;
         }
       }
       byte nameLen = strlen(readName);
-      if (s == randSkillIdx          // random skill
-          || !strcmp(readName, key)  // exact match: gait type + F or L, behavior
+      if ( !strcmp(readName, key)  // exact match: gait type + F or L, behavior
           // || readName[nameLen - 1] == 'L' && !strncmp(readName, key, nameLen - 1)
           || (readName[nameLen - 1] != 'F' && strcmp(readName, "bk") && !strncmp(readName, key, keyLen - 1) && (lr == 'L' || lr == 'R' || lr == 'X'))  // L, R or X
       ) {
