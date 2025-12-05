@@ -97,6 +97,9 @@ template<typename T> String list2String(T *arr, byte len = DOF) {
   return temp;
 }
 
+// DEBUG/TEST FUNCTION: Prints an indexed table of array values with headers
+// Purpose: Debugging tool to visualize array data with row/column indices
+// Usage: Pass any array to display its contents in table format with index numbers
 template<typename T> void printTable(T *list) {
   printRange(0, DOF);
   printList(list, DOF);
@@ -159,6 +162,9 @@ template<typename T> void getExtreme(T *arr, T *extreme, int len = DOF) {
   }
 }
 
+// DEBUG/TEST FUNCTION: Calculates and prints frames per second (FPS)
+// Purpose: Performance monitoring to measure main loop execution speed
+// Usage: Call in loop() to track real-time performance, identifies bottlenecks and timing issues
 void FPS() {
   if (millis() - loopTimer < 1000)
     fps++;
