@@ -64,11 +64,12 @@
 String SoftwareVersion = "";
 String uniqueName = "";
 
-#define BIRTHMARK '@'  // Send '!' token to reset the birthmark in the EEPROM so that the robot will know to restart and reset
+#define BIRTHMARK \
+  '@'           // Send '!' token to reset the birthmark in the EEPROM so that the robot will know to restart and reset
 #define BT_BLE  // toggle Bluetooth Low Energy (BLE）
 #define BT_SSP  // toggle Bluetooth Secure Simple Pairing (BT_SSP)
 // #define WIFI_MANAGER  // toggle WiFi Manager. It should be always off for now
-#define WEB_SERVER // toggle web server
+#define WEB_SERVER  // toggle web server
 // #define SHOW_FPS // toggle FPS display
 
 #define SERVO_FREQ 240
@@ -101,9 +102,8 @@ const uint8_t PWM_pin[PWM_NUM] = {
     19, 2,  4,  27,  // head or shoulder roll
 
     33, 5,  15, 14,  // shoulder pitch
-    32, 18, 13, 12  // knee
+    32, 18, 13, 12   // knee
 };
-
 
 #define MAX_READING 4096.0  // to compensate the different voltage level of boards
 #define BASE_RANGE 1024.0
@@ -114,14 +114,7 @@ double rate = 1.0 * MAX_READING / BASE_RANGE;
 #define WALKING_DOF 8
 #define GAIT_ARRAY_DOF 8
 
-
-enum ServoModel_t {
-  G41 = 0,
-  P1S,
-  P1L,
-  P2K,
-  P50
-};
+enum ServoModel_t { G41 = 0, P1S, P1L, P2K, P50 };
 
 ServoModel_t servoModelList[] = {REGULAR, REGULAR, REGULAR, REGULAR, REGULAR, REGULAR, REGULAR, REGULAR,
                                  REGULAR, REGULAR, REGULAR, REGULAR, KNEE,    KNEE,    KNEE,    KNEE};
@@ -150,7 +143,7 @@ bool newBoard = false;
    IMU.
 
 */
-#define T_ABORT 'a'            // abort the calibration values
+#define T_ABORT 'a'  // abort the calibration values
 #define T_BEEP \
   'b'  // b note1 duration1 note2 duration2 ... e.g. b12 8 14 8 16 8 17 8 19 4. bVolume will change the volume of the
        // sound, in scale of 0~10. 0 will mute all sound effect. e.g. b3. a single 'b' will toggle all sound on/off
@@ -166,23 +159,23 @@ bool newBoard = false;
        // single 'f' returns all the joints' position
 #define C_FOLLOW 'F'
 #define C_FOLLOW_OFF 'f'
-#define C_LEARN 'l'  // Should be named C_SERVO_FEEDBACK_LEARN since it is only associated with T_SERVO_FEEDBACK?
+#define C_LEARN 'l'   // Should be named C_SERVO_FEEDBACK_LEARN since it is only associated with T_SERVO_FEEDBACK?
 #define C_REPLAY 'r'  // Should be named C_SERVO_FEEDBACK_REPLAY since it is only associated with T_SERVO_FEEDBACK?
 #define T_SERVO_FOLLOW 'F'  // make the other legs follow the moved legs
 
-#define T_GYRO 'g'  // gyro-related commands. by itself, is a toggle to turn on or off the gyro function
+#define T_GYRO 'g'          // gyro-related commands. by itself, is a toggle to turn on or off the gyro function
 // These Character (C_) commands apply to the T_GYRO Token
-#define C_GYRO_UPDATE 'U'                 // update the gyro data
-#define C_GYRO_UPDATE_OFF 'u'             // stop updating the gyro data
-#define C_GYRO_FINENESS 'F'               // increase the frequency of gyroscope sampling
-#define C_GYRO_FINENESS_OFF 'f'           // reduce the frequency of gyroscope sampling to accelerate motion
-#define C_GYRO_BALANCE 'B'                // turn on the gyro balancing
-#define C_GYRO_BALANCE_OFF 'b'            // turn off the gyro balancing
-#define C_GYRO_CALIBRATE 'c'              // calibrate the IMU. enter "gc"
-#define C1_GYRO_CALIBRATE_IMMEDIATELY 'i' // calibrate the IMU immediately. enter "gci"
+#define C_GYRO_UPDATE 'U'                  // update the gyro data
+#define C_GYRO_UPDATE_OFF 'u'              // stop updating the gyro data
+#define C_GYRO_FINENESS 'F'                // increase the frequency of gyroscope sampling
+#define C_GYRO_FINENESS_OFF 'f'            // reduce the frequency of gyroscope sampling to accelerate motion
+#define C_GYRO_BALANCE 'B'                 // turn on the gyro balancing
+#define C_GYRO_BALANCE_OFF 'b'             // turn off the gyro balancing
+#define C_GYRO_CALIBRATE 'c'               // calibrate the IMU. enter "gc"
+#define C1_GYRO_CALIBRATE_IMMEDIATELY 'i'  // calibrate the IMU immediately. enter "gci"
 
 // These Character (C_) commands apply to various tokens that have a print capability (e.g. T_GYRO, T_SERVO_FEEDBACK)
-#define C_PRINT 'P'  // Continuously print data
+#define C_PRINT 'P'      // Continuously print data
 #define C_PRINT_OFF 'p'  // Print data once then stop
 
 #define T_HELP_INFO 'h'  // hold the loop to check printed information.
@@ -194,18 +187,22 @@ bool newBoard = false;
 #define T_JOYSTICK 'J'
 #define T_SKILL 'k'
 #define T_SKILL_DATA 'K'
-#define T_BALANCE_SLOPE 'l'           // change the slope of the balancing adjustment in roll and pitch directions. \
-                                      // default "l 1 1". the numbers allows [-2,-1,0,1,2]
-#define T_LISTED_BIN 'L'              // a list of the DOFx joint angles: angle0 angle1 angle2 ... angle15
-#define T_INDEXED_SEQUENTIAL_ASC 'm'  // m jointIndex1 jointAngle1 jointIndex2 jointAngle2 ... e.g. m0 70 0 -70 8 -20 9 -20
-#define T_INDEXED_SEQUENTIAL_BIN 'M'  // M jointIndex1 jointAngle1 jointIndex2 jointAngle2 ... e.g. M0 70 0 -70 8 -20 9 -20
-#define T_NAME 'n'                    // customize the Bluetooth device's broadcast name. e.g. nMyDog will name the device as "MyDog" \
-                                      // it takes effect the next time the board boosup. it won't interrupt the current connecton.
+#define T_BALANCE_SLOPE \
+  'l'                     // change the slope of the balancing adjustment in roll and pitch directions. \
+                          // default "l 1 1". the numbers allows [-2,-1,0,1,2]
+#define T_LISTED_BIN 'L'  // a list of the DOFx joint angles: angle0 angle1 angle2 ... angle15
+#define T_INDEXED_SEQUENTIAL_ASC \
+  'm'                     // m jointIndex1 jointAngle1 jointIndex2 jointAngle2 ... e.g. m0 70 0 -70 8 -20 9 -20
+#define T_INDEXED_SEQUENTIAL_BIN \
+  'M'                     // M jointIndex1 jointAngle1 jointIndex2 jointAngle2 ... e.g. M0 70 0 -70 8 -20 9 -20
+#define T_NAME \
+  'n'  // customize the Bluetooth device's broadcast name. e.g. nMyDog will name the device as "MyDog" \
+       // it takes effect the next time the board boosup. it won't interrupt the current connecton.
 // #define T_MELODY 'o'
 #define T_SIGNAL_GEN 'o'  // signal generator for joint movements
-#define T_CPG 'r'      //Oscillator for Central Pattern Generator (ASCII)
-#define T_CPG_BIN 'Q'  //Oscillator for Central Pattern Generator (Binary)
-#define T_PAUSE 'p'  // pause
+#define T_CPG 'r'         // Oscillator for Central Pattern Generator (ASCII)
+#define T_CPG_BIN 'Q'     // Oscillator for Central Pattern Generator (Binary)
+#define T_PAUSE 'p'       // pause
 #define T_TASK_QUEUE 'q'
 #define T_SAVE 's'
 #define T_TILT 't'
@@ -215,9 +212,9 @@ bool newBoard = false;
 // #define T_XLEG 'x'
 #define T_LEARN 'x'
 
-#define T_READ 'R'  // read pin     R
-#define T_WRITE 'W'  // write pin                      W
-#define TYPE_ANALOG 'a'  //            Ra(analog read)   Wa(analog write)
+#define T_READ 'R'        // read pin     R
+#define T_WRITE 'W'       // write pin                      W
+#define TYPE_ANALOG 'a'   //            Ra(analog read)   Wa(analog write)
 #define TYPE_DIGITAL 'd'  //            Rd(digital read)  Wd(digital write)
 
 #define T_RESET '!'
@@ -251,7 +248,7 @@ float radPerDeg = M_PI / 180;
 #define IDLE_TIME 1000
 long idleTimer = 0;
 #define CHECK_BATTERY_PERIOD 1000  // every 1 seconds. 60 mins -> 3600 seconds
-#define BATTERY_WARNING_FREQ 10  // every 10 seconds
+#define BATTERY_WARNING_FREQ 10    // every 10 seconds
 byte batteryWarningCounter = 0;
 float lastVoltage;
 int uptime = -1;
@@ -262,20 +259,20 @@ byte fps = 0;
 // long wdtTimer;
 
 // Gait cycle counting variables
-int targetCycles = 0;       // Target number of gait cycles to complete
-int completedCycles = 0;    // Number of gait cycles completed so far
+int targetCycles = 0;            // Target number of gait cycles to complete
+int completedCycles = 0;         // Number of gait cycles completed so far
 bool cycleCountingMode = false;  // Whether cycle counting mode is active
 
 char token;
 char lastToken;
 char lowerToken;
 #define CMD_LEN 20
-char *lastCmd = new char[CMD_LEN + 1];  // the last char must be '\0' for safe so CMD_LEN+1 elements are required
+char* lastCmd = new char[CMD_LEN + 1];  // the last char must be '\0' for safe so CMD_LEN+1 elements are required
 int cmdLen = 0;
 byte newCmdIdx = 0;
 int8_t periodGlobal = 0;
 #define BUFF_LEN 2507  // 1524 =125*20+7=2507
-char *newCmd = new char[BUFF_LEN + 1];
+char* newCmd = new char[BUFF_LEN + 1];
 int spaceAfterStoringData = BUFF_LEN;
 char buttonCmd[20];
 int serialTimeout;
@@ -284,15 +281,14 @@ char terminator;
 long lastSerialTime = 0;
 String webResponse = "";
 
-
 /*  These "Q" booleans are conditions that are checked to activate or deactivate different states.
     A condition set to true activates (turns on) a state.
 */
 bool updateGyroQ = true;
 bool fineAdjustQ = true;
-bool gyroBalanceQ = true;  // true = CONTINUOUSLY access recovery options in dealWithExceptions().
-bool printGyroQ = false;  // true = CONTINUOUSLY access print6Axis() which prints Gyro (IMU) data.
-bool readFeedbackQ = false;  // true = CONTINUOUSLY access servoFeedback() which prints servo angles.
+bool gyroBalanceQ = true;      // true = CONTINUOUSLY access recovery options in dealWithExceptions().
+bool printGyroQ = false;       // true = CONTINUOUSLY access print6Axis() which prints Gyro (IMU) data.
+bool readFeedbackQ = false;    // true = CONTINUOUSLY access servoFeedback() which prints servo angles.
 bool followFeedbackQ = false;  // true = CONTINUOUSLY access servoFollow() which follows servo angles as servos are
                                // manipulated and automatically calls servoFeedback() to show updated servo angles.
 bool manualHeadQ = false;
@@ -315,15 +311,17 @@ int8_t prev_imuException = 0;
 byte transformSpeed = 2;
 float protectiveShift;  // reduce the wearing of the potentiometer
 
-
-
 int8_t moduleList[] = {
     EXTENSION_GROVE_SERIAL,
     EXTENSION_VOICE,
     EXTENSION_PIR,
 };
 
-String moduleNames[] = {"Grove_Serial", "Voice",  "PIR", };
+String moduleNames[] = {
+    "Grove_Serial",
+    "Voice",
+    "PIR",
+};
 
 bool moduleActivatedQ[] = {0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0};
 
@@ -350,11 +348,7 @@ int delayShort = 3;
 int delayPrevious;
 int runDelay = delayMid;
 
-int8_t middleShift[] = { 0, -90, 0, 0,
-                         -45, -45, -45, -45,
-                         55, 55, -55, -55,
-                         -55, -55, -55, -55 };
-
+int8_t middleShift[] = {0, -90, 0, 0, -45, -45, -45, -45, 55, 55, -55, -55, -55, -55, -55, -55};
 
 // #define INVERSE_SERVO_DIRECTION
 
@@ -372,7 +366,6 @@ int angleLimit[][2] = {
     {-200, 80},  {-200, 80},  {-80, 200}, {-80, 200}, {-80, 200}, {-80, 200}, {-80, 200}, {-80, 200},
 };
 
-
 int currentAng[DOF] = {0, 0, 0, 0, 0, 0, 0, 0, 75, 75, 75, 75, -55, -55, -55, -55};
 int previousAng[DOF] = {0, 0, 0, 0, 0, 0, 0, 0, 75, 75, 75, 75, -55, -55, -55, -55};
 
@@ -388,22 +381,22 @@ float RollPitchDeviation[2];
 float currentAdjust[DOF] = {};
 int balanceSlope[2] = {1, 1};  // roll, pitch
 
-#include "tools.h"
 #include "QList/QList.h"
+#include "tools.h"
 #include "taskQueue.h"
 
 /* Dependencies for displayNsvPartition() */
+#include <set>              // To manage unique namespaces
+#include "esp_log.h"        // To check ESP32 partitions
 #include "esp_partition.h"  // To check ESP32 partitions
-#include "esp_log.h"  // To check ESP32 partitions
-#include "nvs_flash.h"  // To check namespaces in the nvs partition of the ESP32
-#include "nvs.h"  // To check namespaces in the nvs partition of the ESP32
-#include <set>  // To manage unique namespaces
+#include "nvs.h"            // To check namespaces in the nvs partition of the ESP32
+#include "nvs_flash.h"      // To check namespaces in the nvs partition of the ESP32
 
-#include "sound.h"
 #include <Wire.h>
 #include "configConstants.h"
 #include "bluetoothManager.h"
 #include "io.h"
+#include "sound.h"
 
 #include "imu.h"
 
@@ -411,14 +404,14 @@ int balanceSlope[2] = {1, 1};  // roll, pitch
 #include "infrared.h"
 #endif
 #include "espServo.h"
+#include "moduleManager.h"
 #include "motion.h"
 #include "skill.h"
-#include "moduleManager.h"
 #ifdef WEB_SERVER
 #include "webServer.h"
 #endif
-#include "reaction.h"
 #include "qualityAssurance.h"
+#include "reaction.h"
 
 void initRobot() {
   soundState = false;
@@ -437,7 +430,6 @@ void initRobot() {
   printToAllPorts(SoftwareVersion);
   i2cDetect(Wire);
 
-
   config.begin("config", false);  // false: read/write mode. true: read-only mode.
 
   newBoard = newBoardQ();
@@ -447,21 +439,13 @@ void initRobot() {
   PTL("/10");
 #ifdef WEB_SERVER
 #if defined(WIFI_MANAGER)
-  if (rebootForWifiManagerQ)
-  {
-    startWifiManager();
-  }
+  if (rebootForWifiManagerQ) { startWifiManager(); }
 #else
-  if (rebootForWifiManagerQ)
-  {
-    connectWifiFromStoredConfig();
-  }
+  if (rebootForWifiManagerQ) { connectWifiFromStoredConfig(); }
 #endif
 #endif
 
-
-  if (updateGyroQ)
-    imuSetup();
+  if (updateGyroQ) imuSetup();
 
   servoSetup();
   lastCmd[0] = '\0';
@@ -474,18 +458,18 @@ void initRobot() {
 #endif
 
   QA();
-  
+
   // Bluetooth mode intelligent switching initialization
   initBluetoothModes();
   tQueue = new TaskQueue();
   loadBySkillName("rest");  // must have to avoid memory crash. need to check why.
                             // allCalibratedPWM(currentAng); alone will lead to crash
   delay(500);
-  
+
   initModuleManager();
 
   // readIMU(); // ypr is slow when starting up. leave enough time between IMU initialization and this reading
-  if (!moduleDemoQ && updateGyroQ){
+  if (!moduleDemoQ && updateGyroQ) {
     delay(500);
     // Wait for IMU readings to converge before checking for exceptions
     if (imuException != 0) {

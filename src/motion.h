@@ -13,58 +13,56 @@ void calibratedPWM(byte i, float angle, float speedRatio = 0) {
 
   for (int s = 0; s <= steps; s++) {
     int degree = duty + (steps == 0 ? 0 : (1 + cos(M_PI * s / steps)) / 2 * (duty0 - duty));
-    {
-      servo[actualServoIndex].write(degree);
-    }
+    { servo[actualServoIndex].write(degree); }
     //    delayMicroseconds(1);
   }
 }
 
-void allCalibratedPWM(int *dutyAng, byte offset = 0) {
-  for (int8_t i = DOF - 1; i >= offset; i--) {
-    calibratedPWM(i, dutyAng[i]);
-  }
+void allCalibratedPWM(int* dutyAng, byte offset = 0) {
+  for (int8_t i = DOF - 1; i >= offset; i--) { calibratedPWM(i, dutyAng[i]); }
 }
 
-template<typename T>
-void transform(T *target, byte angleDataRatio = 1, float speedRatio = 1, byte offset = 0, int period = 0, int runDelay = 8) {
-    int *diff = new int[DOF - offset], maxDiff = 0;
-    for (byte i = offset; i < DOF; i++) {
-      if (manualHeadQ && i < HEAD_GROUP_LEN && token == T_SKILL)  // the head motion will be handled by skill.perform()
-        continue;
-      diff[i - offset] = currentAng[i] - target[i - offset] * angleDataRatio;
-      maxDiff = max(maxDiff, abs(diff[i - offset]));
-    }
-    int steps = speedRatio > 0 ? int(round(maxDiff / 1.0 /*degreeStep*/ / speedRatio)) : 0;  // default speed is 1 degree per step
-    // if (maxDiff == 0) {
-    //   delete[] diff;
-    //   return;
-    // }
-    for (int s = 0; s <= steps; s++) {
-      if (updateGyroQ && printGyroQ) {
-        print6Axis();
-      }
+template <typename T>
+void transform(T* target, byte angleDataRatio = 1, float speedRatio = 1, byte offset = 0, int period = 0,
+               int runDelay = 8) {
+  int *diff = new int[DOF - offset], maxDiff = 0;
+  for (byte i = offset; i < DOF; i++) {
+    if (manualHeadQ && i < HEAD_GROUP_LEN && token == T_SKILL)  // the head motion will be handled by skill.perform()
+      continue;
+    diff[i - offset] = currentAng[i] - target[i - offset] * angleDataRatio;
+    maxDiff = max(maxDiff, abs(diff[i - offset]));
+  }
+  int steps =
+      speedRatio > 0 ? int(round(maxDiff / 1.0 /*degreeStep*/ / speedRatio)) : 0;  // default speed is 1 degree per step
+  // if (maxDiff == 0) {
+  //   delete[] diff;
+  //   return;
+  // }
+  for (int s = 0; s <= steps; s++) {
+    if (updateGyroQ && printGyroQ) { print6Axis(); }
 
-      for (byte i = offset; i < DOF; i++) {
-        float dutyAng = (target[i - offset] * angleDataRatio + (steps == 0 ? 0 : (1 + cos(M_PI * s / steps)) / 2 * diff[i - offset]));
-        calibratedPWM(i, dutyAng);
-      }
-      delay((DOF - offset) / 2);
+    for (byte i = offset; i < DOF; i++) {
+      float dutyAng =
+          (target[i - offset] * angleDataRatio + (steps == 0 ? 0 : (1 + cos(M_PI * s / steps)) / 2 * diff[i - offset]));
+      calibratedPWM(i, dutyAng);
     }
-    delete[] diff;
+    delay((DOF - offset) / 2);
+  }
+  delete[] diff;
 }
 
 // balancing parameters
-#define ROLL_LEVEL_TOLERANCE 5  // the body is still considered as level, no angle adjustment
+#define ROLL_LEVEL_TOLERANCE 5                      // the body is still considered as level, no angle adjustment
 #define PITCH_LEVEL_TOLERANCE 3
-#define NUM_ADAPT_PARAM 2                                                   // number of parameters for adaption
-float levelTolerance[2] = { ROLL_LEVEL_TOLERANCE, PITCH_LEVEL_TOLERANCE };  // the body is still considered as level, no angle adjustment
+#define NUM_ADAPT_PARAM 2                           // number of parameters for adaption
+float levelTolerance[2] = {ROLL_LEVEL_TOLERANCE,
+                           PITCH_LEVEL_TOLERANCE};  // the body is still considered as level, no angle adjustment
 
 #define LARGE_ROLL 90
 #define LARGE_PITCH 75
 
-// the following coefficients will be divided by radPerDeg in the adjust() function. so (float) 0.1 can be saved as (int8_t) 1
-// this trick allows using int8_t array insead of float array, saving 96 bytes and allows storage on EEPROM
+// the following coefficients will be divided by radPerDeg in the adjust() function. so (float) 0.1 can be saved as
+// (int8_t) 1 this trick allows using int8_t array insead of float array, saving 96 bytes and allows storage on EEPROM
 #define panF 60
 #define tiltF 60
 #define sRF 50            // shoulder roll factor
@@ -78,16 +76,28 @@ float levelTolerance[2] = { ROLL_LEVEL_TOLERANCE, PITCH_LEVEL_TOLERANCE };  // t
 #define POSTURE_WALKING_FACTOR 0.5
 #define ADJUSTMENT_DAMPER 5
 
-float adaptiveParameterArray[][NUM_ADAPT_PARAM] = {
-  { -panF / 2, 0 }, { panF / 8, -tiltF / 3 }, { 0, 0 }, { -1 * panF, 0 }, { sRF, -sPF }, { -sRF, -sPF }, { -sRF, sPF }, { sRF, sPF }, { uRF, uPF }, { uRF, uPF }, { uRF, uPF }, { uRF, uPF }, { lRF, -0.5 * lPF }, { lRF, -0.5 * lPF }, { lRF, 0.5 * lPF }, { lRF, 0.5 * lPF }
-};
-
+float adaptiveParameterArray[][NUM_ADAPT_PARAM] = {{-panF / 2, 0},
+                                                   {panF / 8, -tiltF / 3},
+                                                   {0, 0},
+                                                   {-1 * panF, 0},
+                                                   {sRF, -sPF},
+                                                   {-sRF, -sPF},
+                                                   {-sRF, sPF},
+                                                   {sRF, sPF},
+                                                   {uRF, uPF},
+                                                   {uRF, uPF},
+                                                   {uRF, uPF},
+                                                   {uRF, uPF},
+                                                   {lRF, -0.5 * lPF},
+                                                   {lRF, -0.5 * lPF},
+                                                   {lRF, 0.5 * lPF},
+                                                   {lRF, 0.5 * lPF}};
 
 float adjust(byte i, bool postureQ = false) {
   float rollAdj, pitchAdj;
   float cutOff = postureQ ? 45 : 15;  // reduce angle deviation for non-posture skills to filter noise
   pitchAdj = adaptiveParameterArray[i][1] * max(float(-cutOff), min(float(cutOff), RollPitchDeviation[1]));
-  if (i == 1 || i > 3) {  // check idx = 1
+  if (i == 1 || i > 3) {              // check idx = 1
     bool leftQ = (i - 1) % 4 > 1 ? true : false;
     // bool frontQ = i % 4 < 2 ? true : false;
     // bool upperQ = i / 4 < 3 ? true : false;
@@ -95,14 +105,13 @@ float adjust(byte i, bool postureQ = false) {
     if ((leftQ && balanceSlope[0] * RollPitchDeviation[0] > 0)  // operator * is higher than &&
         || (!leftQ && balanceSlope[0] * RollPitchDeviation[0] < 0))
       leftRightFactor = LEFT_RIGHT_FACTOR * abs(balanceSlope[0]);
-    rollAdj = (i == 1 || i > 7 ? fabs(RollPitchDeviation[0]) : RollPitchDeviation[0]) * adaptiveParameterArray[i][0] * leftRightFactor;
+    rollAdj = (i == 1 || i > 7 ? fabs(RollPitchDeviation[0]) : RollPitchDeviation[0]) * adaptiveParameterArray[i][0] *
+              leftRightFactor;
     //    rollAdj = fabs(RollPitchDeviation[0]) * adaptiveParameterArray[i][0] * leftRightFactor;
   } else
     rollAdj = RollPitchDeviation[0] * adaptiveParameterArray[i][0];
-  float idealAdjust = radPerDeg * (
-                        (i > 3 ? POSTURE_WALKING_FACTOR : 1) *
-                          balanceSlope[0] * rollAdj
-                        - balanceSlope[1] * pitchAdj);
+  float idealAdjust =
+      radPerDeg * ((i > 3 ? POSTURE_WALKING_FACTOR : 1) * balanceSlope[0] * rollAdj - balanceSlope[1] * pitchAdj);
 
   currentAdjust[i] += max(min(idealAdjust - currentAdjust[i], float(ADJUSTMENT_DAMPER)), -float(ADJUSTMENT_DAMPER));
 
@@ -110,7 +119,6 @@ float adjust(byte i, bool postureQ = false) {
   currentAdjust[i] = max(float(-45), min(float(thres), currentAdjust[i]));
   return currentAdjust[i];
 }
-
 
 int calibratePincerByVibration(int start, int end, int step, int threshold = 10000 * gFactor) {
   PTT("Try ", start);
@@ -152,40 +160,39 @@ int calibratePincerByVibration(int start, int end, int step, int threshold = 100
   return end;
 }
 
-
 int8_t amplitude = 10;
 int8_t sideRatio = 0;
 int8_t stateSwitchAngle = 5;
-int8_t shift[] = { -4, 4 };
+int8_t shift[] = {-4, 4};
 int8_t loopDelay = 5;
-int8_t skipStep[] = { 1, 3 };  //support, swing
-int8_t phase[] = { 0, 30, 50, 80 };
+int8_t skipStep[] = {1, 3};  // support, swing
+int8_t phase[] = {0, 30, 50, 80};
 
 class CPG {
-private:
+ private:
   int _nSample;
-  float *precalcCos;
-  int *pick;
-  float *sample;  // shrinked sample after skipping points
-  bool *supportStage;  // mark if each sample point is in support stage
+  float* precalcCos;
+  int* pick;
+  float* sample;       // shrinked sample after skipping points
+  bool* supportStage;  // mark if each sample point is in support stage
   int sampleLen;
   int shiftIndex[5];
   int edge;
   int8_t _amplitude;
-  int8_t _sideRatio;  //left/right x 10
+  int8_t _sideRatio;  // left/right x 10
   int8_t _stateSwitchAngle;
   int8_t _loopDelay;
-  int8_t _phase[5];  //range 200. the first 100 is the support stage. The last one should always be 0.
-public:
+  int8_t _phase[5];  // range 200. the first 100 is the support stage. The last one should always be 0.
+ public:
   int8_t _midShift[2];
   int8_t _skipStep[2];
   CPG(int nSample, int8_t skipStep[]) {
     _nSample = nSample;
     precalcCos = new float[_nSample + 1];
     pick = new int[_nSample + 1];
-    sample = nullptr;  // will be allocated in setPar
+    sample = nullptr;        // will be allocated in setPar
     supportStage = nullptr;  // will be allocated in setPar
-    _phase[4] = 0;  //range 200. the first 100 is the support stage. The last one should always be 0.
+    _phase[4] = 0;           // range 200. the first 100 is the support stage. The last one should always be 0.
     sampleLen = 0;
     _skipStep[0] = skipStep[0];
     _skipStep[1] = skipStep[1];
@@ -196,9 +203,9 @@ public:
       precalcCos[i] = -cos(i * 2 * 3.14159 / _nSample);
       pick[i] = -1;
       if (i > edge && i < _nSample / 2 - edge) {
-        step = _skipStep[0];  //support stage
+        step = _skipStep[0];  // support stage
       } else
-        step = _skipStep[1];  //swing stage
+        step = _skipStep[1];  // swing stage
       if (i == pickIndex) {
         pick[i] = sampleLen;
         pickIndex += step;
@@ -207,35 +214,27 @@ public:
     }
     PTHL("sampleLen", sampleLen);
   }
-  
+
   ~CPG() {
     delete[] precalcCos;
     delete[] pick;
-    if (sample != nullptr) {
-      delete[] sample;
-    }
-    if (supportStage != nullptr) {
-      delete[] supportStage;
-    }
+    if (sample != nullptr) { delete[] sample; }
+    if (supportStage != nullptr) { delete[] supportStage; }
   }
-  void setPar(int8_t amplitude, int8_t sideRatio, int8_t stateSwitchAngle, int8_t loopDelay, int8_t midShift[], int8_t phase[]) {
+  void setPar(int8_t amplitude, int8_t sideRatio, int8_t stateSwitchAngle, int8_t loopDelay, int8_t midShift[],
+              int8_t phase[]) {
     _amplitude = amplitude;
     _sideRatio = sideRatio;
     _stateSwitchAngle = stateSwitchAngle;
     _loopDelay = loopDelay;
     _midShift[0] = midShift[0];
     _midShift[1] = midShift[1];
-    for (byte i = 0; i < 4; i++)
-      _phase[i] = phase[i];
-    
+    for (byte i = 0; i < 4; i++) _phase[i] = phase[i];
+
     // Release old arrays if they exist
-    if (sample != nullptr) {
-      delete[] sample;
-    }
-    if (supportStage != nullptr) {
-      delete[] supportStage;
-    }
-    
+    if (sample != nullptr) { delete[] sample; }
+    if (supportStage != nullptr) { delete[] supportStage; }
+
     sample = new float[sampleLen];
     supportStage = new bool[sampleLen];
     sampleLen = 0;
@@ -245,7 +244,7 @@ public:
       for (int i = 0; i < _nSample; i++) {
         int j = (shiftIndex[l] + i) % _nSample;
         if (pick[j] >= 0) {
-          if (l == 4) {  //calculate the 0 shift sample, no stateSwitchAngle here
+          if (l == 4) {  // calculate the 0 shift sample, no stateSwitchAngle here
             sample[sampleLen] = precalcCos[j];
             supportStage[sampleLen] = (i > edge && i < _nSample / 2 - edge);  // mark support stage
             sampleLen++;
@@ -268,15 +267,13 @@ public:
       for (int8_t l = 0; l < 4; l++) {
         int sampleIndex = (m + shiftIndex[l]) % sampleLen;
         float ratio = (l % 3 ? rightRatio : leftRatio);
-        
+
         // Calculate base angle with ratio
         float angle = _amplitude * ratio * sample[sampleIndex];
-        
+
         // Add stateSwitchAngle for support stage (not affected by ratio)
-        if (supportStage[sampleIndex]) {
-          angle += _stateSwitchAngle;
-        }
-        
+        if (supportStage[sampleIndex]) { angle += _stateSwitchAngle; }
+
         calibratedPWM(8 + l, angle + _midShift[l < 2 ? 0 : 1]);
       }
       delay(_loopDelay);
@@ -285,17 +282,18 @@ public:
   void printCPG() {
     printToAllPorts("Amp\tside\tswitch\tShiftF\tShiftB\tdelay\tSupport\tSwing\tPhase");
     char message[50];
-    sprintf(message, "%d\t%0.1f\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d",
-            _amplitude, _sideRatio / 10.0, _stateSwitchAngle, _midShift[0], _midShift[1], _loopDelay, _skipStep[0], _skipStep[1], _phase[0], _phase[1], _phase[2], _phase[3]);
+    sprintf(message, "%d\t%0.1f\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d", _amplitude, _sideRatio / 10.0,
+            _stateSwitchAngle, _midShift[0], _midShift[1], _loopDelay, _skipStep[0], _skipStep[1], _phase[0], _phase[1],
+            _phase[2], _phase[3]);
     printToAllPorts(message);
   }
 };
-CPG *cpg = NULL;
+CPG* cpg = NULL;
 void updateCPG() {
-  char *pch;
+  char* pch;
   char subToken = newCmd[0];
   int8_t parsingShift = 1;
-  if (isdigit(subToken) || subToken == '-')  //followed by subtoken
+  if (isdigit(subToken) || subToken == '-')  // followed by subtoken
     parsingShift = 0;
 
   int pars[12] = {};
@@ -310,25 +308,23 @@ void updateCPG() {
 
   if (subToken == 'g') {
     static int8_t gaits[][13] = {
-      { 20, 0, 5, -8, 4, 3, 1, 2, 35, 1, 35, 1, '~' },     //small
-      { 35, 0, 5, -8, 4, 3, 1, 2, 35, 1, 35, 1, '~' },     //large
-      { 15, 0, 5, -6, -4, 3, 1, 3, 21, 51, 31, 1, '~' },   //back
-      { 15, 0, 5, -14, -10, 1, 2, 1, 70, 70, 1, 1, '~' },  //bound
-      { 18, 0, 5, -6, -10, 3, 3, 1, 80, 80, 1, 1, '~' },   //bound2
-      { 17, 0, 5, 0, 0, 3, 1, 3, 1, 75, 50, 25, '~' },     //heng
-      { 18, 0, 5, -4, -4, 3, 2, 3, 36, 49, 49, 36, '~' },  //heng2
-      { 18, 0, 5, 0, 0, 3, 1, 2, 35, 46, 35, 46, '~' }     //turnR
+        {20, 0, 5, -8, 4, 3, 1, 2, 35, 1, 35, 1, '~'},     // small
+        {35, 0, 5, -8, 4, 3, 1, 2, 35, 1, 35, 1, '~'},     // large
+        {15, 0, 5, -6, -4, 3, 1, 3, 21, 51, 31, 1, '~'},   // back
+        {15, 0, 5, -14, -10, 1, 2, 1, 70, 70, 1, 1, '~'},  // bound
+        {18, 0, 5, -6, -10, 3, 3, 1, 80, 80, 1, 1, '~'},   // bound2
+        {17, 0, 5, 0, 0, 3, 1, 3, 1, 75, 50, 25, '~'},     // heng
+        {18, 0, 5, -4, -4, 3, 2, 3, 36, 49, 49, 36, '~'},  // heng2
+        {18, 0, 5, 0, 0, 3, 1, 2, 35, 46, 35, 46, '~'}     // turnR
     };
-    for (byte i = 0; i < 8; i++)
-      tQueue->addTask(T_CPG_BIN, gaits[i], 2000);
+    for (byte i = 0; i < 8; i++) tQueue->addTask(T_CPG_BIN, gaits[i], 2000);
     tQueue->addTask(T_REST, "", 0);
   } else {
-    if (parsingShift == 0)  //shift
+    if (parsingShift == 0)  // shift
     {
       amplitude = pars[0];
       sideRatio = pars[1];
-      stateSwitchAngle = pars[2],
-      shift[0] = pars[3];
+      stateSwitchAngle = pars[2], shift[0] = pars[3];
       shift[1] = pars[4];
       loopDelay = pars[5];
       skipStep[0] = pars[6];
@@ -340,17 +336,15 @@ void updateCPG() {
     } else if (subToken == 'k') {
       skipStep[0] = pars[0];
       skipStep[1] = pars[1];
-      if (cpg != NULL)
-        delete cpg;
+      if (cpg != NULL) delete cpg;
       cpg = new CPG(600, skipStep);
-    } else if (subToken == 'a')  //amplitude
+    } else if (subToken == 'a')  // amplitude
       amplitude = pars[0];
     else if (subToken == 'd')
       loopDelay = pars[0];
     else if (subToken == 'p')
-      for (byte l = 0; l < 4; l++)
-        phase[l] = pars[l];
-    else if (subToken == 's')  //shift
+      for (byte l = 0; l < 4; l++) phase[l] = pars[l];
+    else if (subToken == 's')  // shift
     {
       shift[0] = pars[0];
       shift[1] = pars[1];
@@ -372,10 +366,8 @@ void updateCPG() {
   }
 }
 int calibrationReference[] = {
-// the angle difference between P1L and P1S is significant for auto calibration.
-  0, 0, 0, 0, 0, 0, 0, 0,
-  73, 73, 76, 76, -66, -66, -66, -66
-};
+    // the angle difference between P1L and P1S is significant for auto calibration.
+    0, 0, 0, 0, 0, 0, 0, 0, 73, 73, 76, 76, -66, -66, -66, -66};
 
 // int calibrationReference2[] = {
 //   0, 0, 0, 0, 0, 0, 0, 0,
@@ -387,8 +379,7 @@ void autoCalibrate() {
   PTLF("Push the robot tightly to the ground. Enter any character when ready.");
   while (!Serial.available() && !buffLen)  // wait for user input
     ;
-  while (Serial.available())
-    Serial.read();
+  while (Serial.available()) Serial.read();
   for (byte t = 0; t < connectedCountDown; t++) {
     servoFeedback();
     // printList(movedJoint);
@@ -406,12 +397,12 @@ void autoCalibrate() {
   measureServoPin = 16;  // reattach the servos in the next reaction loop
 }
 
-void signalGenerator(int8_t resolution, int8_t speed, int8_t *pars, int8_t len, bool move = 1, char curveMethod = 't') {  // trigonometric
+void signalGenerator(int8_t resolution, int8_t speed, int8_t* pars, int8_t len, bool move = 1,
+                     char curveMethod = 't') {  // trigonometric
   // circular
   int targetFrame[DOF + 1];
   // arrayNCPY(targetFrame, currentAng, DOF);
-  for (int i = 0; i < DOF; i++)
-    targetFrame[i] = currentAng[i];
+  for (int i = 0; i < DOF; i++) targetFrame[i] = currentAng[i];
   for (int t = 0; t < 360; t += resolution) {
     for (int8_t i = 0; i < len / 5; i++) {
       int8_t jointIdx = pars[i * 5];
@@ -427,14 +418,13 @@ void signalGenerator(int8_t resolution, int8_t speed, int8_t *pars, int8_t len, 
       // PTHL("midpoint", midpoint);
       int angle = 0;
       if (curveMethod == 't')  // currently we set sin function as the default and only option
-        // angle = round(amp * sin(M_PI * 2.0 * freq * (t + phase*3/freq) / 360.0)) + midpoint;//phase: 120 => 1 full period
-        // else if(curveMethod == 'c')
+        // angle = round(amp * sin(M_PI * 2.0 * freq * (t + phase*3/freq) / 360.0)) + midpoint;//phase: 120 => 1 full
+        // period else if(curveMethod == 'c')
         angle = midpoint + round(amp * sin(2.0 * M_PI * ((t + phase * 3 / freq) / (360.0 / freq))));
       PTT(angle, ',');
       targetFrame[jointIdx] = angle;
     }
-    if (move)
-      transform(targetFrame, 1, speed);
+    if (move) transform(targetFrame, 1, speed);
     PTL();
   }
 }
@@ -455,10 +445,10 @@ void printComparisonArrays(int8_t* originalData, int originalTotalFrame, int8_t*
     for (int j = 0; j < 11; j++) {
       printToAllPorts(String(originalData[i * 11 + j]) + ",", false);  // No newline after each value
     }
-    printToAllPorts("");  // Print newline to end the frame
+    printToAllPorts("");                                               // Print newline to end the frame
   }
   printToAllPorts("}");
-  
+
   // Print optimized data
   printToAllPorts("=== Optimized Data ===");
   printToAllPorts("{");
@@ -466,7 +456,7 @@ void printComparisonArrays(int8_t* originalData, int originalTotalFrame, int8_t*
     for (int j = 0; j < 11; j++) {
       printToAllPorts(String(optimizedData[i * 11 + j]) + ",", false);  // No newline after each value
     }
-    printToAllPorts("");  // Print newline to end the frame
+    printToAllPorts("");                                                // Print newline to end the frame
   }
   printToAllPorts("}");
 }
@@ -474,20 +464,20 @@ void printComparisonArrays(int8_t* originalData, int originalTotalFrame, int8_t*
 // Optimize learned data by removing intermediate frames while preserving local extrema
 void smoothMerge() {
   if (totalFrame <= 3) return;  // No optimization needed for less than 4 frames
-  
+
   bool keepFrame[MAX_FRAME];
   int totalChange[MAX_FRAME];
-  
+
   // Initialize arrays
   for (int i = 0; i < totalFrame; i++) {
     keepFrame[i] = false;
     totalChange[i] = 0;
   }
-  
+
   // Always keep the first and last frames
   keepFrame[0] = true;
   keepFrame[totalFrame - 1] = true;
-  
+
   // Calculate total change amount for each frame
   for (int frame = 1; frame < totalFrame - 1; frame++) {
     int frameChange = 0;
@@ -495,80 +485,76 @@ void smoothMerge() {
       int8_t prev = learnData[(frame - 1) * 11 + joint];
       int8_t curr = learnData[frame * 11 + joint];
       int8_t next = learnData[(frame + 1) * 11 + joint];
-      
+
       // Calculate the change amount for this joint in this frame
       int jointChange = abs(curr - prev) + abs(next - curr);
       frameChange += jointChange;
     }
     totalChange[frame] = frameChange;
   }
-  
+
   // Find statistics of change amounts
   int maxChange = 0;
   int minChange = 10000;
   int avgChange = 0;
-  
+
   for (int i = 1; i < totalFrame - 1; i++) {
     maxChange = max(maxChange, totalChange[i]);
     minChange = min(minChange, totalChange[i]);
     avgChange += totalChange[i];
   }
   avgChange /= (totalFrame - 2);
-  
+
   // Balanced threshold: keep frames with significant changes
   int threshold = avgChange * 1.2;  // More selective threshold
-  
+
   PTHL("Average Change:", avgChange);
   PTHL("Max Change:", maxChange);
   PTHL("Threshold:", threshold);
-  
+
   // Keep frames based on threshold
   for (int frame = 1; frame < totalFrame - 1; frame++) {
-    if (totalChange[frame] > threshold) {
-      keepFrame[frame] = true;
-    }
+    if (totalChange[frame] > threshold) { keepFrame[frame] = true; }
   }
-  
+
   // Check local extrema for all joints with unified threshold
   for (int joint = 0; joint < 11; joint++) {
     for (int frame = 1; frame < totalFrame - 1; frame++) {
       int8_t prev = learnData[(frame - 1) * 11 + joint];
       int8_t curr = learnData[frame * 11 + joint];
       int8_t next = learnData[(frame + 1) * 11 + joint];
-      
+
       // Check if it's a significant local extrema
-      if (((curr > prev && curr > next) || (curr < prev && curr < next)) 
-          && (abs(curr - prev) > 15 || abs(next - curr) > 15)) {
+      if (((curr > prev && curr > next) || (curr < prev && curr < next)) &&
+          (abs(curr - prev) > 15 || abs(next - curr) > 15)) {
         keepFrame[frame] = true;
       }
     }
   }
-  
+
   // Check for significant direction changes in important joints (0,1,2,8-15)
   for (int joint = 0; joint < 11; joint++) {
     // Skip joints 3-7 as they have small movements
     if (joint >= 3 && joint <= 7) continue;
-    
+
     for (int frame = 2; frame < totalFrame - 2; frame++) {
       int8_t prev2 = learnData[(frame - 2) * 11 + joint];
       int8_t prev1 = learnData[(frame - 1) * 11 + joint];
       int8_t curr = learnData[frame * 11 + joint];
       int8_t next1 = learnData[(frame + 1) * 11 + joint];
       int8_t next2 = learnData[(frame + 2) * 11 + joint];
-      
+
       // Check for direction change with meaningful amplitude
       int prevDir = (prev1 > prev2) ? 1 : -1;
       int currDir = (curr > prev1) ? 1 : -1;
       int nextDir = (next1 > curr) ? 1 : -1;
-      
+
       if (prevDir != currDir || currDir != nextDir) {
-        if (abs(curr - prev1) > 15 || abs(next1 - curr) > 15) {
-          keepFrame[frame] = true;
-        }
+        if (abs(curr - prev1) > 15 || abs(next1 - curr) > 15) { keepFrame[frame] = true; }
       }
     }
   }
-  
+
   // Ensure the interval between adjacent kept frames is not too large
   for (int i = 0; i < totalFrame - 1; i++) {
     if (keepFrame[i]) {
@@ -579,7 +565,7 @@ void smoothMerge() {
           break;
         }
       }
-      
+
       // If interval exceeds 12 frames, insert a frame in the middle
       if (nextKeep > 0 && nextKeep - i > 12) {
         int midFrame = (i + nextKeep) / 2;
@@ -587,38 +573,32 @@ void smoothMerge() {
       }
     }
   }
-  
+
   // Save original data for printing first
   int8_t originalData[11 * MAX_FRAME];
-  for (int i = 0; i < totalFrame * 11; i++) {
-    originalData[i] = learnData[i];
-  }
+  for (int i = 0; i < totalFrame * 11; i++) { originalData[i] = learnData[i]; }
   int originalTotalFrame = totalFrame;
-  
+
   // Reorganize data, keeping only the needed frames
   int8_t optimizedData[11 * MAX_FRAME];
   int newTotalFrame = 0;
-  
+
   for (int i = 0; i < totalFrame; i++) {
     if (keepFrame[i]) {
-      for (int j = 0; j < 11; j++) {
-        optimizedData[newTotalFrame * 11 + j] = learnData[i * 11 + j];
-      }
+      for (int j = 0; j < 11; j++) { optimizedData[newTotalFrame * 11 + j] = learnData[i * 11 + j]; }
       newTotalFrame++;
     }
   }
-  
+
   // Copy optimized data back to original array
-  for (int i = 0; i < newTotalFrame * 11; i++) {
-    learnData[i] = optimizedData[i];
-  }
-  
+  for (int i = 0; i < newTotalFrame * 11; i++) { learnData[i] = optimizedData[i]; }
+
   PTHL("Original Frames:", originalTotalFrame);
   PTHL("Optimized Frames:", newTotalFrame);
-  
+
   // Call function to print comparison arrays (can be toggled on/off)
   printComparisonArrays(originalData, originalTotalFrame, optimizedData, newTotalFrame);
-  
+
   // Update total frame count
   totalFrame = newTotalFrame;
 }
@@ -650,8 +630,7 @@ void learnByDrag() {
          && !Serial.available()                      // not ended by user
          && millis() - idleLearnTimer < IDLE_LEARN)  // not idle for a long time
   {
-    if (!(totalFrame % 10))
-      PTL(totalFrame);
+    if (!(totalFrame % 10)) PTL(totalFrame);
     readAllFeedbackFast();
     int diff = 0;
     for (int i = 0; i < 11; i++) {
@@ -661,27 +640,24 @@ void learnByDrag() {
     }
     // PTHL("diff", diff);
     if (diff > SMALL_DIFF) {  // won't record if the joints are not moved
-      for (int i = 0; i < 11; i++)
-        learnDataPrev[i] = learnData[totalFrame * 11 + i];
+      for (int i = 0; i < 11; i++) learnDataPrev[i] = learnData[totalFrame * 11 + i];
       idleLearnTimer = millis();
       totalFrame++;
     }
   }
-  while (Serial.available())
-    Serial.read();
+  while (Serial.available()) Serial.read();
   beep(30, 300);
-  
+
   // Call smoothMerge function to optimize frame data
   smoothMerge();
-  
+
   tQueue->addTask('k', "up");
   measureServoPin = 16;  // reattach the servos in the next reaction loop
 }
 
 void performLearn() {
   int target[DOF];
-  for (int i = 0; i < DOF; i++)
-    target[i] = currentAng[i];
+  for (int i = 0; i < DOF; i++) target[i] = currentAng[i];
   PTL('{');
   PTTL(-totalFrame, ",0,0,1,\n0,0,0,");
   for (int f = 0; f < totalFrame; f++) {
@@ -689,8 +665,7 @@ void performLearn() {
       int j = (i > 2) ? i + 5 : i;
       target[j] = learnData[f * 11 + i];
       PTT(target[j], ",\t");
-      if (i == 2)
-        PT("0,0,0,0,0,\t");
+      if (i == 2) PT("0,0,0,0,0,\t");
     }
     PTL("8,0,0,0,");
     transform(target, 1, 2);

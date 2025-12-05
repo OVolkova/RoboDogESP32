@@ -1,4 +1,4 @@
-//Generated Date: Fri, 20 Sep 2024 04:06:24 GMT by Jason
+// Generated Date: Fri, 20 Sep 2024 04:06:24 GMT by Jason
 #include <BLEDevice.h>
 #include "bleCommon.h"
 
@@ -17,7 +17,7 @@ static BLEAdvertisedDevice* PetoiBtDevice;
 BLERemoteDescriptor* pRD;
 bool btReceiveDone = false;
 String btRxLoad = "";
-uint8_t dataIndicate[2] = { 0x02, 0x00 };
+uint8_t dataIndicate[2] = {0x02, 0x00};
 // String serverBtDeviceName = "";
 
 void bleParser(String raw) {
@@ -28,18 +28,16 @@ void bleParser(String raw) {
   cmdLen = strlen(newCmd);
 }
 
-void PetoiBtConnected() {
-}
+void PetoiBtConnected() {}
 
-void PetoiBtDisconnected() {
-}
+void PetoiBtDisconnected() {}
 
-static void btPetoiNotifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, uint8_t* pData, size_t length, bool isNotify) {
+static void btPetoiNotifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, uint8_t* pData, size_t length,
+                                  bool isNotify) {
   btReceiveDone = false;
   if (length > 0) {
     btRxLoad = "";
-    for (int i = 0; i < length; i++)
-      btRxLoad += (char)pData[i];
+    for (int i = 0; i < length; i++) btRxLoad += (char)pData[i];
   }
   btRxLoad.replace("\r", "");
   btRxLoad.replace("\n", "");
@@ -54,29 +52,25 @@ static void btPetoiNotifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteris
 
 // Add client connection state debounce variables
 unsigned long lastClientConnectionChange = 0;
-const unsigned long CLIENT_CONNECTION_DEBOUNCE = 1000; // 1 second debounce
+const unsigned long CLIENT_CONNECTION_DEBOUNCE = 1000;  // 1 second debounce
 
 class btPetoiClientCallback : public BLEClientCallbacks {
   void onConnect(BLEClient* pclient) {
     unsigned long currentTime = millis();
-    
+
     // Debounce processing
-    if (currentTime - lastClientConnectionChange < CLIENT_CONNECTION_DEBOUNCE) {
-      return;
-    }
-    
+    if (currentTime - lastClientConnectionChange < CLIENT_CONNECTION_DEBOUNCE) { return; }
+
     PetoiBtConnected();
     lastClientConnectionChange = currentTime;
   }
 
   void onDisconnect(BLEClient* pclient) {
     unsigned long currentTime = millis();
-    
+
     // Debounce processing
-    if (currentTime - lastClientConnectionChange < CLIENT_CONNECTION_DEBOUNCE) {
-      return;
-    }
-    
+    if (currentTime - lastClientConnectionChange < CLIENT_CONNECTION_DEBOUNCE) { return; }
+
     btConnected = false;
     btReceiveDone = false;
     btRxLoad = "";
@@ -100,7 +94,7 @@ bool connectToServer() {
     delete pClientCallback;
     pClientCallback = nullptr;
   }
-  
+
   pBleClient = BLEDevice::createClient();
   pClientCallback = new btPetoiClientCallback();
   pBleClient->setClientCallbacks(pClientCallback);
@@ -163,31 +157,31 @@ void PetoiBtStartScan() {
 #ifdef WEB_SERVER
   extern bool webServerConnected;
   extern std::map<uint8_t, bool> connectedClients;
-  
+
   if (webServerConnected && !connectedClients.empty()) {
     PTLF("WebSocket clients active, delaying BLE scan...");
-    delay(2000); // 等待WebSocket连接稳定
+    delay(2000);  // 等待WebSocket连接稳定
   }
 #endif
-  
+
   BLEDevice::init("");
   BLEScan* pBLEScan = BLEDevice::getScan();
-  
+
   // Clean up any existing callback instance before creating a new one
   if (pAdvertisedDeviceCallbacks != nullptr) {
     delete pAdvertisedDeviceCallbacks;
     pAdvertisedDeviceCallbacks = nullptr;
   }
-  
+
   // Create and save the callback instance
   pAdvertisedDeviceCallbacks = new PetoiAdvertisedDeviceCallbacks();
   pBLEScan->setAdvertisedDeviceCallbacks(pAdvertisedDeviceCallbacks);
-  
+
   // Optimize scan parameters to minimize WiFi interference
-  pBLEScan->setInterval(2000);    // 增加扫描间隔，减少对WiFi的干扰
-  pBLEScan->setWindow(200);       // 减少扫描窗口，降低资源占用
-  pBLEScan->setActiveScan(false); // 使用被动扫描，减少功耗和干扰
-  pBLEScan->start(3, false);      // 减少扫描时间到3秒
+  pBLEScan->setInterval(2000);     // 增加扫描间隔，减少对WiFi的干扰
+  pBLEScan->setWindow(200);        // 减少扫描窗口，降低资源占用
+  pBLEScan->setActiveScan(false);  // 使用被动扫描，减少功耗和干扰
+  pBLEScan->start(3, false);       // 减少扫描时间到3秒
 }
 
 void PetoiBtStopScan() {
@@ -195,52 +189,50 @@ void PetoiBtStopScan() {
   BLEScan* pBLEScan = BLEDevice::getScan();
   if (pBLEScan != nullptr) {
     pBLEScan->stop();
-    pBLEScan->clearResults();  // Clear scan results
+    pBLEScan->clearResults();                         // Clear scan results
     pBLEScan->setAdvertisedDeviceCallbacks(nullptr);  // Remove callback
   }
-  
+
   // Delete the callback instance and clean up memory
   if (pAdvertisedDeviceCallbacks != nullptr) {
     delete pAdvertisedDeviceCallbacks;
     pAdvertisedDeviceCallbacks = nullptr;
   }
-  
+
   // Clean up BLE client resources
   if (pBleClient != nullptr) {
-    if (btConnected) {
-      pBleClient->disconnect();
-    }
+    if (btConnected) { pBleClient->disconnect(); }
     delete pBleClient;
     pBleClient = nullptr;
   }
-  
+
   // Clean up client callback
   if (pClientCallback != nullptr) {
     delete pClientCallback;
     pClientCallback = nullptr;
   }
-  
+
   // Reset connection state
   btConnected = false;
   btReceiveDone = false;
   btRxLoad = "";
-  
+
   // Reset scan-related flags
   doScan = false;
   doConnect = false;
-  
+
   // Clean up the advertised device pointer if it exists
   if (PetoiBtDevice != nullptr) {
     delete PetoiBtDevice;
     PetoiBtDevice = nullptr;
   }
-  
+
   // Clear remote characteristics pointers (they will be invalid after disconnect)
   pRemoteCharacteristicTx = nullptr;
   pRemoteCharacteristicRx = nullptr;
   pRemoteCharacteristicTemp = nullptr;
   pRD = nullptr;
-  
+
   PTLF("BLE scan stopped and all resources cleaned up");
 }
 
@@ -248,7 +240,7 @@ void checkBtScan() {
   if (doConnect) {
     if (connectToServer()) {
       String bleMessage = String(MODEL) + '\n';
-      pRemoteCharacteristicTx->writeValue(bleMessage.c_str(), bleMessage.length()); //tell the Bit model name
+      pRemoteCharacteristicTx->writeValue(bleMessage.c_str(), bleMessage.length());  // tell the Bit model name
       Serial.println("We are now connected to the BLE Server.");
     } else {
       Serial.println("We have failed to connect to the server; there is nothin more we will do.");
@@ -259,7 +251,8 @@ void checkBtScan() {
 
 void bleClientSetup() {
   PTLF("Start...");
-  // serverBtDeviceName = "BBC micro:bit [vatip]";  // It should be modified according to your own board.  another one's name: pogiv
+  // serverBtDeviceName = "BBC micro:bit [vatip]";  // It should be modified according to your own board.  another one's
+  // name: pogiv
   PetoiBtStartScan();
 }
 
