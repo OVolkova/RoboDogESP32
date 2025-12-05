@@ -1,8 +1,8 @@
 // modify the model and board definitions
 //***********************
 
-#define VOICE                     // Petoi Grove voice module
-#define PIR                       // for PIR (Passive Infrared) sensor
+#define VOICE  // Petoi Grove voice module
+#define PIR    // for PIR (Passive Infrared) sensor
 
 #include "src/RoboDog.h"
 
@@ -25,11 +25,10 @@ void loop() {
   } else {
     readSignal();
   }
-  //— generate behavior
+  // — generate behavior
   reaction();
 
 #ifdef WEB_SERVER
   WebServerLoop();  // Handle asynchronous Web requests
 #endif
 }
-

@@ -7,4 +7,4 @@
 #define BLE_CHARACTERISTIC_UUID_RX "6E400002-B5A3-F393-E0A9-E50E24DCCA9E"  // receive
 #define BLE_CHARACTERISTIC_UUID_TX "6E400003-B5A3-F393-E0A9-E50E24DCCA9E"  // transmit
 
-#endif // BLE_COMMON_H
+#endif                                                                     // BLE_COMMON_H

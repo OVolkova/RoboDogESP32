@@ -37,20 +37,18 @@ int dataLen(int8_t p) {
   byte skillHeader = p > 0 ? 4 : 7;
   int frameSize = p > 1 ? WALKING_DOF :  // gait
                       p == 1 ? DOF
-                             :  // posture
-                      DOF + 4;  // behavior
+                             :           // posture
+                      DOF + 4;           // behavior
   int len = skillHeader + abs(p) * frameSize;
   return len;
 }
 
-void i2cDetect(TwoWire &wirePort) {
-  if (&wirePort == &Wire1)
-    wirePort.begin(UART_TX2, UART_RX2, 400000);
+void i2cDetect(TwoWire& wirePort) {
+  if (&wirePort == &Wire1) wirePort.begin(UART_TX2, UART_RX2, 400000);
   byte error, address;
   int nDevices;
   int8_t i2cAddress[] = {0x39, 0x50, 0x54, 0x60, 0x62, 0x68, 0x69};
-  String i2cAddressName[] = {"APDS9960 Gesture", "Mu3 CameraP", "EEPROM",
-                             "Mu3 Camera",
+  String i2cAddressName[] = {"APDS9960 Gesture", "Mu3 CameraP", "EEPROM",  "Mu3 Camera",
                              "AI Vision",        "MPU6050",     "ICM42670"};
   Serial.println("Scanning I2C network...");
   nDevices = 0;
@@ -62,8 +60,7 @@ void i2cDetect(TwoWire &wirePort) {
     error = wirePort.endTransmission();
     if (error == 0) {
       Serial.print("- I2C device found at address 0x");
-      if (address < 16)
-        Serial.print("0");
+      if (address < 16) Serial.print("0");
       Serial.print(address, HEX);
       Serial.print(":\t");
       for (byte i = 0; i < sizeof(i2cAddress) / sizeof(int8_t); i++) {
@@ -87,15 +84,12 @@ void i2cDetect(TwoWire &wirePort) {
           nDevices++;
           break;
         }
-        if (i == sizeof(i2cAddress) / sizeof(int8_t) - 1) {
-          PT("Misc.");
-        }
+        if (i == sizeof(i2cAddress) / sizeof(int8_t) - 1) { PT("Misc."); }
       }
       PTL();
     } else if (error == 4) {
       Serial.print("- Unknown error at address 0x");
-      if (address < 16)
-        Serial.print("0");
+      if (address < 16) Serial.print("0");
       Serial.println(address, HEX);
     }
   }
@@ -107,8 +101,7 @@ void i2cDetect(TwoWire &wirePort) {
     Serial.println("- No I2C devices found");
   else
     Serial.println("- done");
-  if (&wirePort == &Wire1)
-    wirePort.end();
+  if (&wirePort == &Wire1) wirePort.end();
   PTHL("GroveVisionQ", GroveVisionQ);
   PTHL("MuQ", MuQ);
 }
@@ -125,11 +118,11 @@ void resetAsNewBoard(char mark) {
 }
 
 void genBleID(int suffixDigits = 2) {
-  const char *prefix ="Bittle" ;
+  const char* prefix = "Bittle";
 
   int prelen = strlen(prefix);
 
-  char *id = new char[prelen + suffixDigits + 1];
+  char* id = new char[prelen + suffixDigits + 1];
   strcpy(id, prefix);
   for (int i = 0; i < suffixDigits; i++) {
     int temp = esp_random() % 16;
@@ -144,16 +137,15 @@ void genBleID(int suffixDigits = 2) {
   delete[] id;
 }
 
-void customBleID(char *customName, int8_t len) {
+void customBleID(char* customName, int8_t len) {
   config.putString("ID", customName);
-
 }
 
 // Get device name with specified suffix using global uniqueName
 // Returns a dynamically allocated string that must be freed by caller
-char *getDeviceName(const char *suffix) {
+char* getDeviceName(const char* suffix) {
   String deviceName = uniqueName + suffix;
-  char *result = new char[deviceName.length() + 1];
+  char* result = new char[deviceName.length() + 1];
   strcpy(result, deviceName.c_str());
   return result;
 }
@@ -195,16 +187,14 @@ void configSetup() {
     config.putChar("currentLan", 'b');  // a for English, b for Chinese
     // save a preset skill to the temp skill in case its called before assignment
     config.putInt("tmpLen", bufferLen);
-    config.putBytes("tmp", (int8_t *)newCmd, bufferLen);
+    config.putBytes("tmp", (int8_t*)newCmd, bufferLen);
     config.putBool("WifiManager", rebootForWifiManagerQ);  // default is false
 
     // playMelody(melodyInit, sizeof(melodyInit) / 2);
     PTL("- Reset the joints' calibration offsets? (Y/n): ");
     char choice = getUserInputChar();
     PTL(choice);
-    if (choice == 'Y' || choice == 'y') {
-    config.putBytes("calib", servoCalib, DOF);
-    }
+    if (choice == 'Y' || choice == 'y') { config.putBytes("calib", servoCalib, DOF); }
 
   } else {
     resetIfVersionOlderThan(SoftwareVersion);
@@ -220,15 +210,13 @@ void configSetup() {
     PTL(" entries are available in the namespace table.\n");  // this method works regardless of the mode in which the
                                                               // namespace is opened.
     PTHL("Default language: ", defaultLan == 'b' ? " Chinese" : " English");
-      // playMelody(melodyNormalBoot, sizeof(melodyNormalBoot) / 2);
+    // playMelody(melodyNormalBoot, sizeof(melodyNormalBoot) / 2);
   }
 }
 
-void saveCalib(int8_t *var) {
+void saveCalib(int8_t* var) {
   config.putBytes("calib", var, DOF);
-  for (byte s = 0; s < DOF; s++) {
-    calibratedZeroPosition[s] = zeroPosition[s] + float(var[s]) * rotationDirection[s];
-  }
+  for (byte s = 0; s < DOF; s++) { calibratedZeroPosition[s] = zeroPosition[s] + float(var[s]) * rotationDirection[s]; }
 }
 
 // clang-format off

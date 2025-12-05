@@ -1,8 +1,9 @@
 #include "esp32-hal.h"
 /*
     Video: https://www.youtube.com/watch?v=oCMOYS71NIU
-    Based on Neil Kolban example for IDF: https://github.com/nkolban/esp32-snippets/blob/master/cpp_utils/tests/BLE%20Tests/SampleNotify.cpp
-    Ported to Arduino ESP32 by Evandro Copercini
+    Based on Neil Kolban example for IDF:
+   https://github.com/nkolban/esp32-snippets/blob/master/cpp_utils/tests/BLE%20Tests/SampleNotify.cpp Ported to Arduino
+   ESP32 by Evandro Copercini
 
    Create a BLE server that, once we receive a connection, will send periodic notifications.
    The service advertises itself as: 6E400001-B5A3-F393-E0A9-E50E24DCCA9E
@@ -20,37 +21,34 @@
    In this example rxValue is the data received (only accessible inside that function).
    And txValue is the data to be sent, in this example just a byte incremented every second.
 */
+#include <BLE2902.h>
 #include <BLEDevice.h>
 #include <BLEServer.h>
 #include <BLEUtils.h>
-#include <BLE2902.h>
 #include "bleCommon.h"
 
-#define HOLD_TIME 1500        // Increase to 3 seconds (3000), improve connection stability  
+#define HOLD_TIME 1500  // Increase to 3 seconds (3000), improve connection stability
 // #define CONNECTION_ATTEMPT 3  // Increase reconnection attempts
-BLEServer *pServer = NULL;
-BLECharacteristic *pTxCharacteristic;
+BLEServer* pServer = NULL;
+BLECharacteristic* pTxCharacteristic;
 bool deviceConnected = false;
 bool oldDeviceConnected = false;
 
 // BLE UUID definitions are now in bleCommon.h
 
 class MyServerCallbacks : public BLEServerCallbacks {
-  void onConnect(BLEServer *pServer) {
-    deviceConnected = true;
-  };
-  void onDisconnect(BLEServer *pServer) {
-    deviceConnected = false;
-  }
+  void onConnect(BLEServer* pServer) { deviceConnected = true; };
+  void onDisconnect(BLEServer* pServer) { deviceConnected = false; }
 };
 byte bleMessageShift = 1;
 int buffLen = 0;
 class MyCallbacks : public BLECharacteristicCallbacks {
-  void onWrite(BLECharacteristic *pCharacteristic) {
+  void onWrite(BLECharacteristic* pCharacteristic) {
     // Use C-style string handling to avoid std::string compatibility issues
-    const char *rxValueCStr = pCharacteristic->getValue().c_str();
+    const char* rxValueCStr = pCharacteristic->getValue().c_str();
     buffLen = pCharacteristic->getValue().length();
-    // String rxValue = String(pCharacteristic->getValue().c_str());//it will cause unkown bug when sending 'K'-token skill data via mobile app and break the main program.
+    // String rxValue = String(pCharacteristic->getValue().c_str());//it will cause unkown bug when sending 'K'-token
+    // skill data via mobile app and break the main program.
     if (buffLen > 0) {
       // long current = millis();
       // PTH("BLE", current - lastSerialTime);
@@ -61,11 +59,10 @@ class MyCallbacks : public BLECharacteristicCallbacks {
         token = rxValueCStr[0];
         lowerToken = tolower(token);
         terminator = (token >= 'A' && token <= 'Z') ? '~' : '\n';
-        serialTimeout = (token == T_SKILL_DATA || lowerToken == T_BEEP || token == T_TASK_QUEUE) ? SERIAL_TIMEOUT_LONG : SERIAL_TIMEOUT;
+        serialTimeout = (token == T_SKILL_DATA || lowerToken == T_BEEP || token == T_TASK_QUEUE) ? SERIAL_TIMEOUT_LONG
+                                                                                                 : SERIAL_TIMEOUT;
       }
-      for (int i = bleMessageShift; i < buffLen; i++) {
-        newCmd[cmdLen++] = rxValueCStr[i];
-      }
+      for (int i = bleMessageShift; i < buffLen; i++) { newCmd[cmdLen++] = rxValueCStr[i]; }
       bleMessageShift = 0;
       lastSerialTime = millis();
     }
@@ -75,7 +72,8 @@ class MyCallbacks : public BLECharacteristicCallbacks {
 
 void readBle() {
   if (deviceConnected && !bleMessageShift) {
-    while ((char)newCmd[cmdLen - 1] != terminator && long(millis() - lastSerialTime) < serialTimeout) {  // wait until the long message is completed
+    while ((char)newCmd[cmdLen - 1] != terminator &&
+           long(millis() - lastSerialTime) < serialTimeout) {  // wait until the long message is completed
       delay(SERIAL_TIMEOUT);
     }
     // PTH("* BLE", millis() - lastSerialTime);
@@ -96,7 +94,7 @@ void bleSetup() {
   //  Serial.print("UUID: ");
   //  Serial.println(SERVICE_UUID_APP);
   // Create the BLE Device
-  char *bleName = getDeviceName("_BLE");
+  char* bleName = getDeviceName("_BLE");
   PTHL("BLE:\t", bleName);
   BLEDevice::init(bleName);  // read BLE device name from global uniqueName
   delete[] bleName;          // Free the allocated memory
@@ -105,20 +103,15 @@ void bleSetup() {
   pServer->setCallbacks(new MyServerCallbacks());
 
   // Create the BLE Service
-  BLEService *pService = pServer->createService(BLE_SERVICE_UUID);
+  BLEService* pService = pServer->createService(BLE_SERVICE_UUID);
 
   // Create a BLE Characteristic
-  pTxCharacteristic =
-    pService->createCharacteristic(
-      BLE_CHARACTERISTIC_UUID_TX,
-      BLECharacteristic::PROPERTY_NOTIFY);
+  pTxCharacteristic = pService->createCharacteristic(BLE_CHARACTERISTIC_UUID_TX, BLECharacteristic::PROPERTY_NOTIFY);
 
   pTxCharacteristic->addDescriptor(new BLE2902());
 
-  BLECharacteristic *pRxCharacteristic =
-    pService->createCharacteristic(
-      BLE_CHARACTERISTIC_UUID_RX,
-      BLECharacteristic::PROPERTY_WRITE | BLECharacteristic::PROPERTY_WRITE_NR);
+  BLECharacteristic* pRxCharacteristic = pService->createCharacteristic(
+      BLE_CHARACTERISTIC_UUID_RX, BLECharacteristic::PROPERTY_WRITE | BLECharacteristic::PROPERTY_WRITE_NR);
 
   pRxCharacteristic->setCallbacks(new MyCallbacks());
 
@@ -139,16 +132,14 @@ void bleWrite(String buff) {
 
 // Add connection state debounce variables
 unsigned long lastConnectionChange = 0;
-const unsigned long CONNECTION_DEBOUNCE = 1000; // 1 second debounce
+const unsigned long CONNECTION_DEBOUNCE = 1000;  // 1 second debounce
 
 void detectBle() {
   unsigned long currentTime = millis();
-  
+
   // Debounce processing: avoid frequent connection state changes
-  if (currentTime - lastConnectionChange < CONNECTION_DEBOUNCE) {
-    return;
-  }
-  
+  if (currentTime - lastConnectionChange < CONNECTION_DEBOUNCE) { return; }
+
   // disconnecting
   if (!deviceConnected && oldDeviceConnected) {
     delay(50);                    // give the bluetooth stack the chance to get things ready
@@ -163,7 +154,7 @@ void detectBle() {
     Serial.println("Bluetooth BLE connected!");
     oldDeviceConnected = deviceConnected;
     delay(HOLD_TIME);
-    
+
     // Send connection confirmation message
 
     // for (byte i = 0; i < CONNECTION_ATTEMPT; i++) {
@@ -171,7 +162,7 @@ void detectBle() {
     pTxCharacteristic->notify();
     //   delay(100);
     // }
-    
+
     token = 'd';
     bleWrite(String(T_PAUSE));
     lastConnectionChange = currentTime;  // Record state change time

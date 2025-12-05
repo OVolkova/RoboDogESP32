@@ -1,40 +1,30 @@
-float mean(float *a, int n) {
+float mean(float* a, int n) {
   float sum = 0;
-  for (int i = 0; i < n; i++)
-    sum += a[i];
+  for (int i = 0; i < n; i++) sum += a[i];
   return sum / n;
 }
 
-float sDev(float *a, float m, int n) {
+float sDev(float* a, float m, int n) {
   float sum = 0;
-  for (int i = 0; i < n; i++)
-    sum += (a[i] - m) * (a[i] - m);
+  for (int i = 0; i < n; i++) sum += (a[i] - m) * (a[i] - m);
   return sqrt(sum / n);
 }
-byte DcDcGood[] = { 12, 19,
-                    4, 4 };
-byte DcDcBad[] = { 19, 16, 12,
-                   16, 16, 16 };
-byte imuGood[] = { 12, 16, 19,
-                   4, 4, 4 };
-byte imuBad[] = { 25, 20, 16, 11, 9,
-                  16, 16, 16, 16, 16 };  // no intented IMU detected!
-byte imuBad1[] = { 19, 17, 16, 14, 12,
-                   16, 16, 16, 16, 16 };  // too large error
+byte DcDcGood[] = {12, 19, 4, 4};
+byte DcDcBad[] = {19, 16, 12, 16, 16, 16};
+byte imuGood[] = {12, 16, 19, 4, 4, 4};
+byte imuBad[] = {25, 20, 16, 11, 9, 16, 16, 16, 16, 16};    // no intented IMU detected!
+byte imuBad1[] = {19, 17, 16, 14, 12, 16, 16, 16, 16, 16};  // too large error
 
 #define IMU_TEST_TRIGGER 0.5
 #define MEAN_THRESHOLD 0.5
 #define STD_THRESHOLD 0.2
 
-
 void testIMU() {
   bool intendedIMU = false;
 
-  if (icmQ)
-    intendedIMU = true;
+  if (icmQ) intendedIMU = true;
 
-  if (mpuQ)
-    intendedIMU = true;
+  if (mpuQ) intendedIMU = true;
 
   if (!intendedIMU) {
     PTL("\nNo intented IMU detected!");
@@ -46,10 +36,10 @@ void testIMU() {
   PTL("\nIMU test: both mean and standard deviation should be small on Pitch and Roll axis\n");
   // delay(1000);
   int count = 100;
-  float **history = new float *[2];
-  for (int a = 0; a < 2; a++)
-    history[a] = new float[count];
-  while (fabs(ypr[1]) > IMU_TEST_TRIGGER || fabs(ypr[2]) > IMU_TEST_TRIGGER) {  // the IMU should converge to a stable state before the statistics test
+  float** history = new float*[2];
+  for (int a = 0; a < 2; a++) history[a] = new float[count];
+  while (fabs(ypr[1]) > IMU_TEST_TRIGGER ||
+         fabs(ypr[2]) > IMU_TEST_TRIGGER) {  // the IMU should converge to a stable state before the statistics test
     delay(IMU_PERIOD);
     print6Axis();
   }
@@ -58,11 +48,10 @@ void testIMU() {
     while (!imuUpdated)  // lock to prevent reading imu when it's still calculating
       delay(1);
     print6Axis();
-    for (int a = 0; a < 2; a++)
-      history[a][t] = ypr[a + 1];
+    for (int a = 0; a < 2; a++) history[a][t] = ypr[a + 1];
     imuUpdated = false;
   }
-  String axis[] = { "Pitch ", "Roll  " };
+  String axis[] = {"Pitch ", "Roll  "};
   for (int a = 0; a < 2; a++) {
     float m = mean(history[a], count);
     float dev = sDev(history[a], m, count);
@@ -77,19 +66,16 @@ void testIMU() {
         playMelody(imuBad1, sizeof(imuBad1) / 2);
         delay(500);
       }
-      while (Serial.available())
-        Serial.read();
+      while (Serial.available()) Serial.read();
     } else {
       PTL("\tPass!");
       playMelody(imuGood, sizeof(imuGood) / 2);
     }
   }
   delay(100);
-  for (int a = 0; a < 2; a++)
-    delete[] history[a];
+  for (int a = 0; a < 2; a++) delete[] history[a];
   delete[] history;
 };
-
 
 #ifdef IR_PIN
 bool testIR() {
@@ -114,11 +100,9 @@ bool testIR() {
       timer = millis();
       current = IRkey();
       irrecv.resume();  // receive the next value
-      if (current == 0)
-        continue;
+      if (current == 0) continue;
 
-      if (current == 11)
-        previous = 10;
+      if (current == 11) previous = 10;
       if (current - previous == 1)  // if the reading is continuous, add one to right
         right++;
       PT("count");
@@ -166,7 +150,6 @@ void QA() {
     if (choice == 'Y' || choice == 'y')
 
     {
-
       testIMU();
 
       // tests...
@@ -186,8 +169,7 @@ void QA() {
         }
 #endif
       }
-      while (Serial.available())
-        Serial.read();
+      while (Serial.available()) Serial.read();
     }
     config.putChar("birthmark", BIRTHMARK);
     playMelody(melodyIRpass, sizeof(melodyIRpass) / 2);

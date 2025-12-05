@@ -8,8 +8,7 @@
 
 int8_t indexOfModule(char moduleName) {
   for (byte i = 0; i < sizeof(moduleList) / sizeof(char); i++)
-    if (moduleName == moduleList[i])
-      return i;
+    if (moduleName == moduleList[i]) return i;
   return -1;
 }
 bool moduleActivatedQfunction(char moduleCode) {
@@ -18,8 +17,7 @@ bool moduleActivatedQfunction(char moduleCode) {
 
 int8_t activeModuleIdx() {  // designed to work if only one active module is allowed
   for (byte i = 0; i < sizeof(moduleList) / sizeof(char); i++)
-    if (moduleActivatedQ[i])
-      return i;
+    if (moduleActivatedQ[i]) return i;
   return -1;
 }
 
@@ -27,97 +25,90 @@ void initModule(char moduleCode) {
   bool successQ = true;
   int8_t index = indexOfModule(moduleCode);
   switch (moduleCode) {
-    case EXTENSION_GROVE_SERIAL:
-      {
-        PTLF("Start Serial2");
-        Serial2.begin(115200, SERIAL_8N1, UART_RX2, UART_TX2);
-        Serial2.setTimeout(SERIAL_TIMEOUT);
-        break;
-      }
+    case EXTENSION_GROVE_SERIAL: {
+      PTLF("Start Serial2");
+      Serial2.begin(115200, SERIAL_8N1, UART_RX2, UART_TX2);
+      Serial2.setTimeout(SERIAL_TIMEOUT);
+      break;
+    }
 #ifdef VOICE
-    case EXTENSION_VOICE:
-      {
-        voiceSetup();
-        break;
-      }
+    case EXTENSION_VOICE: {
+      voiceSetup();
+      break;
+    }
 #endif
 #ifdef PIR
-    case EXTENSION_PIR:
-      {
-        pirSetup();
-        break;
-      }
+    case EXTENSION_PIR: {
+      pirSetup();
+      break;
+    }
 #endif
-
   }
   moduleActivatedQ[index] = successQ;
 }
 
 void stopModule(char moduleCode) {
   switch (moduleCode) {
-    case EXTENSION_GROVE_SERIAL:
-      {
-        Serial2.end();
-        PTL("Stop Serial 2");
-        break;
-      }
+    case EXTENSION_GROVE_SERIAL: {
+      Serial2.end();
+      PTL("Stop Serial 2");
+      break;
+    }
 #ifdef VOICE
-    case EXTENSION_VOICE:
-      {
-        voiceStop();
-        break;
-      }
+    case EXTENSION_VOICE: {
+      voiceStop();
+      break;
+    }
 #endif
 #ifdef PIR
-    case EXTENSION_PIR:
-      {
-        break;
-      }
+    case EXTENSION_PIR: {
+      break;
+    }
 #endif
   }
 }
 void showModuleStatus() {
   byte moduleCount = sizeof(moduleList) / sizeof(char);
-  printListWithoutString((char *)moduleList, moduleCount);
+  printListWithoutString((char*)moduleList, moduleCount);
   printListWithoutString(moduleActivatedQ, moduleCount);
   moduleDemoQ = moduleActivatedQfunction(EXTENSION_PIR);
 }
 
-void reconfigureTheActiveModule(char *moduleCode) {
+void reconfigureTheActiveModule(char* moduleCode) {
   if (moduleCode[0] == '?') {
     showModuleStatus();
     return;
   }
   bool statusChangedQ = false;
-  
+
   // Determine target module and operation type based on the elegant original design
   char targetModule = moduleCode[0];
   bool isCloseOnlyOperation = false;
-  
+
   // Handle 'X' or 'X~' -> close all
   if (strlen(moduleCode) == 0 || (strlen(moduleCode) >= 1 && (moduleCode[0] == '~' || moduleCode[0] == '\n'))) {
-    targetModule = '-'; // Use '-' to represent close all, avoiding confusion
+    targetModule = '-';  // Use '-' to represent close all, avoiding confusion
   }
   // Handle 'Xc' -> close specific module (lowercase)
   else if (strlen(moduleCode) >= 1 && islower(moduleCode[0])) {
-    targetModule = toupper(moduleCode[0]); // Convert to uppercase for module identification
-    isCloseOnlyOperation = true; // Only close this specific module, don't enable anything
+    targetModule = toupper(moduleCode[0]);  // Convert to uppercase for module identification
+    isCloseOnlyOperation = true;            // Only close this specific module, don't enable anything
   }
   // Handle 'XC' -> enable specific module (uppercase) - use original logic
-  
-  // PTHL("mode", moduleCode);                                          // negative number will deactivate all the modules
-  for (byte i = 0; i < sizeof(moduleList) / sizeof(char); i++) {                                               // disable unneeded modules
+
+  // PTHL("mode", moduleCode);                                          // negative number will deactivate all the
+  // modules
+  for (byte i = 0; i < sizeof(moduleList) / sizeof(char); i++) {  // disable unneeded modules
     if (!moduleActivatedQ[i]) continue;
-    
+
     // For lowercase: only process target module; For original logic: only process non-target modules
-    if ((isCloseOnlyOperation && moduleList[i] != targetModule) || 
-        (!isCloseOnlyOperation && moduleList[i] == targetModule)) continue;
-    
+    if ((isCloseOnlyOperation && moduleList[i] != targetModule) ||
+        (!isCloseOnlyOperation && moduleList[i] == targetModule))
+      continue;
+
     // Original logic: protect voice unless closing all
-    if (!isCloseOnlyOperation && 
-        (moduleList[i] == EXTENSION_VOICE ) && 
-        targetModule != '-') continue;
-    
+    if (!isCloseOnlyOperation && (moduleList[i] == EXTENSION_VOICE) && targetModule != '-') continue;
+
     // Unified disable logic
     PTHL("- disable", moduleNames[i]);
     stopModule(moduleList[i]);
@@ -136,13 +127,11 @@ void reconfigureTheActiveModule(char *moduleCode) {
     }
   }
 
-  if (statusChangedQ){  // if the status of the modules has changed, show the new status
+  if (statusChangedQ) {  // if the status of the modules has changed, show the new status
     config.putBytes("moduleState", moduleActivatedQ, sizeof(moduleList) / sizeof(char));
     showModuleStatus();
     for (byte i = 0; i < sizeof(moduleList) / sizeof(char); i++) {
-      if (moduleList[i] == targetModule && moduleActivatedQ[i]) {
-        initModule(moduleList[i]);
-      }
+      if (moduleList[i] == targetModule && moduleActivatedQ[i]) { initModule(moduleList[i]); }
     }
   }
 }
@@ -164,7 +153,7 @@ void initModuleManager() {
 }
 
 void read_serial() {
-  Stream *serialPort = NULL;
+  Stream* serialPort = NULL;
 // String source;
 #ifdef BT_SSP
   if (SerialBT.available()) {  // give BT a higher priority over wired serial
@@ -172,7 +161,7 @@ void read_serial() {
     // source = "BT";
   } else
 #endif
-    if (moduleActivatedQ[0] && Serial2.available()) {
+      if (moduleActivatedQ[0] && Serial2.available()) {
     serialPort = &Serial2;
   } else if (Serial.available()) {
     serialPort = &Serial;
@@ -182,9 +171,11 @@ void read_serial() {
     token = serialPort->read();
     lowerToken = tolower(token);
     newCmdIdx = 2;
-    delay(1);                                                  // leave enough time for serial read
-    terminator = (token >= 'A' && token <= 'Z') ? '~' : '\n';  // capitalized tokens use binary encoding for long data commands
-                                                               //'~' ASCII code = 126; may introduce bug when the angle is 126 so only use angles <= 125
+    delay(1);  // leave enough time for serial read
+    terminator = (token >= 'A' && token <= 'Z')
+                     ? '~'
+                     : '\n';  // capitalized tokens use binary encoding for long data commands
+                              //'~' ASCII code = 126; may introduce bug when the angle is 126 so only use angles <= 125
     serialTimeout = (token == T_SKILL_DATA || lowerToken == T_BEEP) ? SERIAL_TIMEOUT_LONG : SERIAL_TIMEOUT;
     lastSerialTime = millis();
     do {
@@ -192,13 +183,14 @@ void read_serial() {
         // long current = millis();
         // PTH(source, current - lastSerialTime);
         do {
-          if (((token == T_SKILL || lowerToken == T_INDEXED_SIMULTANEOUS_ASC || lowerToken == T_INDEXED_SEQUENTIAL_ASC) && cmdLen >= spaceAfterStoringData) || cmdLen > BUFF_LEN) {
+          if (((token == T_SKILL || lowerToken == T_INDEXED_SIMULTANEOUS_ASC ||
+                lowerToken == T_INDEXED_SEQUENTIAL_ASC) &&
+               cmdLen >= spaceAfterStoringData) ||
+              cmdLen > BUFF_LEN) {
             PTH("Cmd Length: ", cmdLen);
             PTF("OVF");
             beep(5, 100, 50, 5);
-            do {
-              serialPort->read();
-            } while (serialPort->available());
+            do { serialPort->read(); } while (serialPort->available());
             printToAllPorts(token);
             token = T_SKILL;
             strcpy(newCmd, "up");
@@ -210,14 +202,18 @@ void read_serial() {
         } while (serialPort->available());
         lastSerialTime = millis();
       }
-    } while (newCmd[cmdLen - 1] != terminator && long(millis() - lastSerialTime) < serialTimeout);  // the lower case tokens are encoded in ASCII and can be entered in Arduino IDE's serial monitor
-                                                                                                    // if the terminator of the command is set to "no line ending" or "new line", parsing can be different
-                                                                                                    // so it needs a timeout for the no line ending case
+    } while (newCmd[cmdLen - 1] != terminator &&
+             long(millis() - lastSerialTime) <
+                 serialTimeout);  // the lower case tokens are encoded in ASCII and can be entered in Arduino IDE's
+                                  // serial monitor if the terminator of the command is set to "no line ending" or "new
+                                  // line", parsing can be different so it needs a timeout for the no line ending case
     // PTH("* " + source, long(millis() - lastSerialTime));
-    if (!(token >= 'A' && token <= 'Z') || token == 'X' || token == 'R' || token == 'W') {  // serial monitor is used to send lower cased tokens by users
-                                                                                            // delete the unexpected '\r' '\n' if the serial monitor sends line ending symbols
-      leftTrimSpaces(newCmd, &cmdLen);                                                      // allow space between token and parameters, such as "k sit"
-      for (int i = cmdLen - 1; i >= 0; i--) {                                               // delete the '/r' and '/n' if the serial monitor is configured to send terminators
+    if (!(token >= 'A' && token <= 'Z') || token == 'X' || token == 'R' ||
+        token == 'W') {  // serial monitor is used to send lower cased tokens by users
+                         // delete the unexpected '\r' '\n' if the serial monitor sends line ending symbols
+      leftTrimSpaces(newCmd, &cmdLen);  // allow space between token and parameters, such as "k sit"
+      for (int i = cmdLen - 1; i >= 0;
+           i--) {  // delete the '/r' and '/n' if the serial monitor is configured to send terminators
         if ((newCmd[i] == '\n') || (newCmd[i] == '\r')) {
           newCmd[i] = '\0';
           cmdLen--;
@@ -226,8 +222,7 @@ void read_serial() {
     }
     cmdLen = (newCmd[cmdLen - 1] == terminator) ? cmdLen - 1 : cmdLen;
     newCmd[cmdLen] = (token >= 'A' && token <= 'Z') ? '~' : '\0';
-    if (token >= 'A' && token <= 'Z')
-      newCmd[cmdLen + 1] = '\0';
+    if (token >= 'A' && token <= 'Z') newCmd[cmdLen + 1] = '\0';
     newCmdIdx = 2;
     // PTH("read_serial, cmdLen = ", cmdLen);
     // printCmdByType(token, newCmd);
@@ -239,17 +234,17 @@ void readSignal() {
 #ifdef IR_PIN
   read_infrared();  //  newCmdIdx = 1
 #endif
-  read_serial();  //  newCmdIdx = 2
-  
+  read_serial();    //  newCmdIdx = 2
+
   // Smart Bluetooth mode reading
 #if defined(BT_BLE)
-  if (activeBtMode == BT_MODE_SERVER) {    // activeBtMode == BT_MODE_NONE
-    detectBle();  //  newCmdIdx = 3;
+  if (activeBtMode == BT_MODE_SERVER) {  // activeBtMode == BT_MODE_NONE
+    detectBle();                         //  newCmdIdx = 3;
     readBle();
   }
 #endif
 #if defined(BT_CLIENT)
-  if (activeBtMode == BT_MODE_CLIENT) {    // activeBtMode == BT_MODE_NONE
+  if (activeBtMode == BT_MODE_CLIENT) {  // activeBtMode == BT_MODE_NONE
     readBleClient();
   }
 #endif
@@ -258,34 +253,30 @@ void readSignal() {
 //     webServer.handleClient();
 // #endif
 #ifdef VOICE
-  if (moduleActivatedQ[indexOfModule(EXTENSION_VOICE)])
-    read_voice();
+  if (moduleActivatedQ[indexOfModule(EXTENSION_VOICE)]) read_voice();
 #endif
 
   long current = millis();
   if (newCmdIdx)
-    idleTimer = millis() + IDLE_TIME ;
-  else if (token != T_SERVO_CALIBRATE && token != T_SERVO_FOLLOW && token != T_SERVO_FEEDBACK && current - idleTimer > 0) {
+    idleTimer = millis() + IDLE_TIME;
+  else if (token != T_SERVO_CALIBRATE && token != T_SERVO_FOLLOW && token != T_SERVO_FEEDBACK &&
+           current - idleTimer > 0) {
     if (moduleIndex == -1)  // no active module
       return;
 
 #ifdef PIR
-    if (moduleActivatedQ[indexOfModule(EXTENSION_PIR)])
-      read_PIR();
+    if (moduleActivatedQ[indexOfModule(EXTENSION_PIR)]) read_PIR();
 #endif
   }
 }
 
-void read_sound() {
-}
+void read_sound() {}
 
-void read_GPS() {
-}
+void read_GPS() {}
 
 void readEnvironment() {
   if (updateGyroQ)
-    if (imuUpdated && printGyroQ)
-      print6Axis();
+    if (imuUpdated && printGyroQ) print6Axis();
 
   read_sound();
   read_GPS();

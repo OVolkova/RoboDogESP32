@@ -1,57 +1,54 @@
 
 #include "ir/IRremote.h"
 
-//#include <IRremote.h>
-//The included library is identical to the IRremote library by shirriff, version 2.6.1
-//Source: https://github.com/Arduino-IRremote/Arduino-IRremote
-//Here, we include the decoding functions in our folder only to make it more convenient for newbie users
-//All rights belong to the original author, and we follow the MIT license.
-//You no longer need to modify ~/Documents/Arduino/libraries/src/IRremote/IRremote.h as mentioned in our old manual.
-
-
+// #include <IRremote.h>
+// The included library is identical to the IRremote library by shirriff, version 2.6.1
+// Source: https://github.com/Arduino-IRremote/Arduino-IRremote
+// Here, we include the decoding functions in our folder only to make it more convenient for newbie users
+// All rights belong to the original author, and we follow the MIT license.
+// You no longer need to modify ~/Documents/Arduino/libraries/src/IRremote/IRremote.h as mentioned in our old manual.
 
 IRrecv irrecv(IR_PIN);
 decode_results results;
-//abbreviation //gait/posture/function names
-#define K00 "d"  //rest and shutdown all servos
-#define K01 "F"  //forward
-#define K02 "g"  //turn off gyro feedback to boost speed
+// abbreviation //gait/posture/function names
+#define K00 "d"     // rest and shutdown all servos
+#define K01 "F"     // forward
+#define K02 "g"     // turn off gyro feedback to boost speed
 
-#define K10 "L"   //left
-#define K11 "up"  //neutral stand up posture
-#define K12 "R"   //right
+#define K10 "L"     // left
+#define K11 "up"    // neutral stand up posture
+#define K12 "R"     // right
 
-#define K20 "p"  //pause motion and shut off all servos
-#define K21 "B"  //backward
-#define K22 "c"  //calibration mode with IMU turned off
+#define K20 "p"     // pause motion and shut off all servos
+#define K21 "B"     // backward
+#define K22 "c"     // calibration mode with IMU turned off
 
-#define K30 "vt"  //stepping
-#define K31 "cr"  //crawl
-#define K32 "wk"  //walk
+#define K30 "vt"    // stepping
+#define K31 "cr"    // crawl
+#define K32 "wk"    // walk
 
-#define K40 "tr"   //trot
-#define K41 "sit"  //sit
-#define K42 "str"  //stretch
+#define K40 "tr"    // trot
+#define K41 "sit"   // sit
+#define K42 "str"   // stretch
 
-#define K50 "hi"   //greeting
-#define K51 "pu"   //push up
-#define K52 "pee"  //standng with three legs
+#define K50 "hi"    // greeting
+#define K51 "pu"    // push up
+#define K52 "pee"   // standng with three legs
 
-#define K60 "ck"    //check around
-#define K61 "scrh"  //scratch
+#define K60 "ck"    // check around
+#define K61 "scrh"  // scratch
 
-
-//#define K62 "z"    //fold position
-#define K62 "T"  //call the last skill data received from the serial port
+// #define K62 "z"    //fold position
+#define K62 "T"         // call the last skill data received from the serial port
 
 #define SHORT_ENCODING  // activating this line will use a shorter encoding of the HEX values
 
-String translateIR()  // takes action based on IR code received
+String translateIR()    // takes action based on IR code received
 // describing Remote IR codes.
 {
 #ifndef SHORT_ENCODING
   switch (results.value) {
-    //IR signal    key on IR remote           //key mapping
+    // IR signal    key on IR remote           //key mapping
     case 0xFFA25D: /*PTLF(" CH-");   */ return (F(K00));
     case 0xFF629D: /*PTLF(" CH");  */ return (F(K01));
     case 0xFFE21D: /*PTLF(" CH+"); */ return (F(K02));
@@ -80,11 +77,11 @@ String translateIR()  // takes action based on IR code received
     case 0xFF4AB5: /*PTLF(" 8");  */ return (F(K61));
     case 0xFF52AD: /*PTLF(" 9");  */ return (F(K62));
 
-    case 0xFFFFFFFF: return ("");  //Serial.println(" REPEAT");
+    case 0xFFFFFFFF: return ("");  // Serial.println(" REPEAT");
 #else
   uint8_t trimmed = (results.value >> 8);
   switch (trimmed) {
-    //IR signal    key on IR remote           //key mapping
+    // IR signal    key on IR remote           //key mapping
     case 0xA2: /*PTLF(" CH-");   */ return (F(K00));
     case 0x62: /*PTLF(" CH");  */ return (F(K01));
     case 0xE2: /*PTLF(" CH+"); */ return (F(K02));
@@ -113,15 +110,14 @@ String translateIR()  // takes action based on IR code received
     case 0x4A: /*PTLF(" 8");  */ return (F(K61));
     case 0x52: /*PTLF(" 9");  */ return (F(K62));
 
-    case 0xFF: return ("");  //Serial.println(" REPEAT");
+    case 0xFF: return ("");  // Serial.println(" REPEAT");
 #endif
-    default:
-      {
-        //Serial.println(results.value, HEX);
-      }
-      return ("");  //Serial.println("null");
-  }                 // End Case
-  //delay(100); // Do not get immediate repeat //no need because the main loop is slow
+    default: {
+      // Serial.println(results.value, HEX);
+    }
+      return ("");  // Serial.println("null");
+  }  // End Case
+  // delay(100); // Do not get immediate repeat //no need because the main loop is slow
 }
 
 String gait = "wk";
@@ -141,8 +137,8 @@ String irParser(String raw) {
         gait = "tr";
     }
     return gait + direct;
-  }
-  else if (raw == "vt" || raw == "cr" || raw == "wk" || raw == "mh" || raw == "tr" || raw == "rn" || raw == "bd" || raw == "ph") {
+  } else if (raw == "vt" || raw == "cr" || raw == "wk" || raw == "mh" || raw == "tr" || raw == "rn" || raw == "bd" ||
+             raw == "ph") {
     gait = raw;
     return gait + direct;
   } else {
@@ -153,15 +149,14 @@ String irParser(String raw) {
 void read_infrared() {
   if (irrecv.decode(&results)) {
     String IRsig = irParser(translateIR());
-    //PTL(IRsig);
+    // PTL(IRsig);
     if (IRsig != "") {
       if (IRsig.length() == 1)
         token = IRsig[0];
       else {
         token = T_SKILL;
         strcpy(newCmd, IRsig.c_str());
-        if (!strcmp(newCmd, "up"))
-          direct = 'F';
+        if (!strcmp(newCmd, "up")) direct = 'F';
       }
       newCmdIdx = 1;
     }
@@ -169,13 +164,13 @@ void read_infrared() {
   }
 }
 
-//for QA
+// for QA
 int IRkey()  // takes action based on IR code received
 // describing Remote IR codes.
 {
 #ifndef SHORT_ENCODING
   switch (results.value) {
-    //IR signal    key on IR remote           //key mapping
+    // IR signal    key on IR remote           //key mapping
     case 0xFFA25D: /*PTLF(" CH-");   */ return (2);
     case 0xFF629D: /*PTLF(" CH");  */ return (3);
     case 0xFFE21D: /*PTLF(" CH+"); */ return (4);
@@ -204,11 +199,11 @@ int IRkey()  // takes action based on IR code received
     case 0xFF4AB5: /*PTLF(" 8");  */ return (21);
     case 0xFF52AD: /*PTLF(" 9");  */ return (22);
 
-    case 0xFFFFFFFF: return ("");  //Serial.println(" REPEAT");
+    case 0xFFFFFFFF: return ("");  // Serial.println(" REPEAT");
 #else
   uint8_t trimmed = (results.value >> 8);
   switch (trimmed) {
-    //IR signal    key on IR remote           //key mapping
+    // IR signal    key on IR remote           //key mapping
     case 0xA2: /*PTLF(" CH-");   */ return (2);
     case 0x62: /*PTLF(" CH");  */ return (3);
     case 0xE2: /*PTLF(" CH+"); */ return (4);
@@ -237,13 +232,12 @@ int IRkey()  // takes action based on IR code received
     case 0x4A: /*PTLF(" 8");  */ return (21);
     case 0x52: /*PTLF(" 9");  */ return (22);
 
-    case 0xFF: return (-1);  //Serial.println(" REPEAT");
+    case 0xFF: return (-1);  // Serial.println(" REPEAT");
 #endif
-    default:
-      {
-        //Serial.println(results.value, HEX);
-      }
-      return (0);  //Serial.println("null");
-  }                // End Case
-  //delay(100); // Do not get immediate repeat //no need because the main loop is slow
+    default: {
+      // Serial.println(results.value, HEX);
+    }
+      return (0);  // Serial.println("null");
+  }  // End Case
+  // delay(100); // Do not get immediate repeat //no need because the main loop is slow
 }

@@ -1,5 +1,5 @@
-#include "esp32-hal-adc.h"
 #include "PetoiESP32Servo/ESP32Servo.h"
+#include "esp32-hal-adc.h"
 //------------------angleRange  frequency  minPulse  maxPulse;
 ServoModel servoG41(180, SERVO_FREQ, 500, 2500);
 ServoModel servoP1S(290, SERVO_FREQ, 500, 2500);  // 1s/4 = 250ms 250ms/2500us=100Hz
@@ -18,12 +18,12 @@ int maxPulseWidth = 2600;
 
 Servo servo[PWM_NUM];  // create servo object to control a servo
                        // 16 servo objects can be created on the ESP32
-ServoModel *modelObj[PWM_NUM];
+ServoModel* modelObj[PWM_NUM];
 // Recommended PWM GPIO pins on the ESP32 include 2,4,12-19,21-23,25-27,32-33
 // Possible PWM GPIO pins on the ESP32-S2: 0(used by on-board button),1-17,18(used by on-board LED),19-21,26,33-42
-int8_t movedJoint[DOF] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+int8_t movedJoint[DOF] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 int8_t movedCountDown = 3;  // allow the driving servo to pause in the middle rather than changing its state instantly
-int8_t connectedFeedbackServo[DOF] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+int8_t connectedFeedbackServo[DOF] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 int8_t connectedCountDown = 3;
 int measureServoPin = -1;
 byte nPulse = 3;
@@ -35,21 +35,11 @@ void attachAllESPServos() {
     int joint;
     joint = (s > 3) ? s + 4 : s;
     switch (servoModelList[joint]) {
-      case G41:
-        modelObj[s] = &servoG41;
-        break;
-      case P1S:
-        modelObj[s] = &servoP1S;
-        break;
-      case P1L:
-        modelObj[s] = &servoP1L;
-        break;
-      case P2K:
-        modelObj[s] = &servoP1L;
-        break;
-      case P50:
-        modelObj[s] = &servoP50;
-        break;
+      case G41: modelObj[s] = &servoG41; break;
+      case P1S: modelObj[s] = &servoP1S; break;
+      case P1L: modelObj[s] = &servoP1L; break;
+      case P2K: modelObj[s] = &servoP1L; break;
+      case P50: modelObj[s] = &servoP50; break;
     }
     servo[s].attach(PWM_pin[s], modelObj[s]);
     zeroPosition[joint] = modelObj[s]->getAngleRange() / 2 + float(middleShift[joint]) * rotationDirection[joint];
@@ -63,9 +53,7 @@ void reAttachAllServos() {
   for (int c = 0; c < PWM_NUM; c++)
     if (!servo[c].attached()) {
       byte s = c < 4 ? c : c + 4;
-      if (!movedJoint[s]) {
-        servo[c].attach(PWM_pin[c], modelObj[c]);
-      }
+      if (!movedJoint[s]) { servo[c].attach(PWM_pin[c], modelObj[c]); }
     }
   delay(12);
 }
@@ -106,12 +94,13 @@ void shutServos(byte id = PWM_NUM) {
   if (id == PWM_NUM) {
     for (byte s = 0; s < PWM_NUM; s++) {  // PWM_NUM
       /* the following method can shut down the servos.
-       however, because a single Timer is divided to generate four PWMs, there's random noise when the PWM transits to zero.
-       It will cause the servo to jump before shutdown.
+       however, because a single Timer is divided to generate four PWMs, there's random noise when the PWM transits to
+       zero. It will cause the servo to jump before shutdown.
     */
       //    if (shutEsp32Servo)
-      servo[s].writeMicroseconds(0);  // the joints may randomly jump when the signal goes to zero. the source is in hardware
-                                      //     servo[s].detach(); //another way to turn off the servo
+      servo[s].writeMicroseconds(
+          0);  // the joints may randomly jump when the signal goes to zero. the source is in hardware
+               //     servo[s].detach(); //another way to turn off the servo
     }
   } else {
     id = (PWM_NUM == 12 && id > 3) ? id - 4 : id;
@@ -121,29 +110,29 @@ void shutServos(byte id = PWM_NUM) {
 }
 
 void setServoP(unsigned int p) {
-  for (byte s = 0; s < PWM_NUM; s++)
-    servo[s].writeMicroseconds(p);
+  for (byte s = 0; s < PWM_NUM; s++) servo[s].writeMicroseconds(p);
 }
 
 int measurePulseWidth(uint8_t pwmReadPin) {
   long start = micros();
   while (!digitalRead(pwmReadPin)) {  // wait for high level
-    if (micros() - start > waitTimeForResponse)
-      return -1;
+    if (micros() - start > waitTimeForResponse) return -1;
   }
   long t = micros();
   while (digitalRead(pwmReadPin)) {
-    if (micros() - t > maxPulseWidth)
-      return -2;
+    if (micros() - t > maxPulseWidth) return -2;
   }
   return (micros() - t);
 }
 
 float readFeedback(byte s)  // returns the pulse width in microseconds
 {                           // s is not the joint index, but the pwm pin index that may shift by 4
-  //if(!servo[s].attached())// adding this condition will cause servos to jig. why?
-  servo[s].attach(PWM_pin[s], modelObj[s]);  // sometimes servo[s].attach() is true, but it still needs to be attached. why there's no conflict?
-  delay(15);                                 // it takes time to attach. potentially it can be avoided using the attached() check. but it doesn't work for now.
+  // if(!servo[s].attached())// adding this condition will cause servos to jig. why?
+  servo[s].attach(
+      PWM_pin[s],
+      modelObj[s]);  // sometimes servo[s].attach() is true, but it still needs to be attached. why there's no conflict?
+  delay(15);  // it takes time to attach. potentially it can be avoided using the attached() check. but it doesn't work
+              // for now.
   servo[s].writeMicroseconds(feedbackSignal);
   servo[s].detach();
   pinMode(PWM_pin[s], INPUT);
@@ -151,11 +140,11 @@ float readFeedback(byte s)  // returns the pulse width in microseconds
   int n = nPulse;
   for (byte i = 0; i < nPulse; i++) {  // measure three times to calculate the mean
     int temp = measurePulseWidth(PWM_pin[s]);
-    if (temp < 400) {  //there can be noises to return a fake pulsewidth. it's usually smaller than the shortest possible signal (500ms)
+    if (temp < 400) {  // there can be noises to return a fake pulsewidth. it's usually smaller than the shortest
+                       // possible signal (500ms)
       n--;
-      if (n == 0)
-        return -3;
-    } else if (i > 0)  //skip the first pulse
+      if (n == 0) return -3;
+    } else if (i > 0)  // skip the first pulse
       mean += temp;
   }
   if (n > 1) {
@@ -168,37 +157,38 @@ float readFeedback(byte s)  // returns the pulse width in microseconds
 void servoFeedback(int8_t index = 16) {
   int readAngles[16];
   byte begin = 0, end = 15;
-  if (index > -1 && index < 16)
-    begin = end = index;  //
+  if (index > -1 && index < 16) begin = end = index;  //
   bool infoPrinted = false;
   for (byte jointIdx = begin; jointIdx <= end; jointIdx++) {
-    if (jointIdx == 4)  // skip the shoulder roll joints
+    if (jointIdx == 4)                                             // skip the shoulder roll joints
       jointIdx += 4;
-    if (connectedFeedbackServo[jointIdx] > -connectedCountDown) {  //skip unconnected servo to save time
+    if (connectedFeedbackServo[jointIdx] > -connectedCountDown) {  // skip unconnected servo to save time
       byte i = jointIdx < 4 ? jointIdx : jointIdx - 4;
       int feedback = readFeedback(i);
       if (feedback > -1) {
-        connectedFeedbackServo[jointIdx] = min(int8_t(connectedFeedbackServo[jointIdx] + 1), int8_t(connectedCountDown));
-        float convertedAngle = (servo[i].pulseToAngle(feedback) - calibratedZeroPosition[jointIdx]) / rotationDirection[jointIdx];
-        if (begin == end)
-          PTT(jointIdx, '\t')
+        connectedFeedbackServo[jointIdx] =
+            min(int8_t(connectedFeedbackServo[jointIdx] + 1), int8_t(connectedCountDown));
+        float convertedAngle =
+            (servo[i].pulseToAngle(feedback) - calibratedZeroPosition[jointIdx]) / rotationDirection[jointIdx];
+        if (begin == end) PTT(jointIdx, '\t')
         PTD(convertedAngle, 1);
-        if (begin != end)
-          PT('\t');
+        if (begin != end) PT('\t');
         infoPrinted = true;
         readAngles[jointIdx] = round(convertedAngle);
-        if (fabs(currentAng[jointIdx] - convertedAngle) > (movedJoint[jointIdx] ? 1 : 2)) {  // allow smaller tolarance for driving joint
-                                                                                             // allow larger tolerance for driven joint
+        if (fabs(currentAng[jointIdx] - convertedAngle) >
+            (movedJoint[jointIdx] ? 1 : 2)) {  // allow smaller tolarance for driving joint
+                                               // allow larger tolerance for driven joint
           movedJoint[jointIdx] = movedCountDown;
-        } else if (movedJoint[jointIdx])  //if it's not moved, its state will be decreased until set to false.
+        } else if (movedJoint[jointIdx])       // if it's not moved, its state will be decreased until set to false.
           movedJoint[jointIdx]--;
         currentAng[jointIdx] = readAngles[jointIdx];
-      } else if (connectedFeedbackServo[jointIdx] < connectedCountDown)  // if the servo is confirmed to have feedback, it won't be deleted from the list
-        connectedFeedbackServo[jointIdx] = max(int8_t(connectedFeedbackServo[jointIdx] - 1), int8_t(-connectedCountDown));
+      } else if (connectedFeedbackServo[jointIdx] <
+                 connectedCountDown)  // if the servo is confirmed to have feedback, it won't be deleted from the list
+        connectedFeedbackServo[jointIdx] =
+            max(int8_t(connectedFeedbackServo[jointIdx] - 1), int8_t(-connectedCountDown));
     }
   }
-  if (infoPrinted)
-    PTL();
+  if (infoPrinted) PTL();
 }
 
 bool servoFollow() {
@@ -207,7 +197,7 @@ bool servoFollow() {
   byte movedJointCount = 0;
   for (byte i = 0; i < PWM_NUM; i++) {  // decide if to check all servos.
     byte jointIdx = i < 4 ? i : i + 4;
-    if (movedJoint[jointIdx]) {  // only the previously moved joints will be checked.
+    if (movedJoint[jointIdx]) {         // only the previously moved joints will be checked.
       servoFeedback(jointIdx);
       checkAll = false;
       movedJointList[movedJointCount++] = jointIdx;
@@ -216,13 +206,12 @@ bool servoFollow() {
   if (checkAll) {  // if no joint has been moved, all joints will be checked
     servoFeedback(16);
   }
-  for (byte jointIdx = 0; jointIdx < 16; jointIdx++)
-    newCmd[jointIdx] = currentAng[jointIdx];
+  for (byte jointIdx = 0; jointIdx < 16; jointIdx++) newCmd[jointIdx] = currentAng[jointIdx];
   for (byte i = 0; i < movedJointCount; i++) {
     byte jointIdx = movedJointList[i];
     for (byte j = 0; j < 4; j++)
       if (j != jointIdx % 4) {
-        newCmd[(jointIdx / 4) * 4 + j] = currentAng[jointIdx] ;                     // >> leg
+        newCmd[(jointIdx / 4) * 4 + j] = currentAng[jointIdx];  // >> leg
       } else {
         newCmd[jointIdx] = currentAng[jointIdx];
       }
@@ -233,10 +222,12 @@ bool servoFollow() {
 
 void readAllFeedbackFast()  // returns the pulse width in microseconds
 {                           // s is not the joint index, but the pwm pin index that may shift by 4
-  //if(!servo[s].attached())// adding this condition will cause servos to jig. why?
+  // if(!servo[s].attached())// adding this condition will cause servos to jig. why?
   for (int s = 0; s < 12; s++)
-    servo[s].attach(PWM_pin[s], modelObj[s]);  // sometimes servo[s].attach() is true, but it still needs to be attached. why there's no conflict?
-  delay(3);                                    // it takes time to attach. potentially it can be avoided using the attached() check. but it doesn't work for now.
+    servo[s].attach(PWM_pin[s], modelObj[s]);  // sometimes servo[s].attach() is true, but it still needs to be
+                                               // attached. why there's no conflict?
+  delay(3);  // it takes time to attach. potentially it can be avoided using the attached() check. but it doesn't work
+             // for now.
 
   for (int jointIdx = 0; jointIdx < DOF; jointIdx++) {
     if (jointIdx == 3) jointIdx = 8;
@@ -248,15 +239,17 @@ void readAllFeedbackFast()  // returns the pulse width in microseconds
     int n = nPulse;
     for (byte i = 0; i < nPulse; i++) {  // measure three times to calculate the mean
       int temp = measurePulseWidth(PWM_pin[s]);
-      if (temp < 400) {  //there can be noises to return a fake pulsewidth. it's usually smaller than the shortest possible signal (500ms)
+      if (temp < 400) {  // there can be noises to return a fake pulsewidth. it's usually smaller than the shortest
+                         // possible signal (500ms)
         n--;
-      } else if (i > 0)  //skip the first pulse
+      } else if (i > 0)  // skip the first pulse
         mean += temp;
     }
     if (n > 1) {
       // PTT(n, ": ")
       int feedback = mean / (n - 1);
-      float convertedAngle = (servo[s].pulseToAngle(feedback) - calibratedZeroPosition[jointIdx]) / rotationDirection[jointIdx];
+      float convertedAngle =
+          (servo[s].pulseToAngle(feedback) - calibratedZeroPosition[jointIdx]) / rotationDirection[jointIdx];
       currentAng[jointIdx] = round(convertedAngle);
       // PTT(currentAng[jointIdx], '\t');
     }
@@ -272,7 +265,7 @@ void allRotate() {
     // in steps of 1 degree
     for (int s = 0; s < PWM_NUM; s++) {
       servo[s].write(pos);  // tell servo to go to position in variable 'pos'
-      delay(1);  // waits 15ms for the servo to reach the position
+      delay(1);             // waits 15ms for the servo to reach the position
       Serial.println(pos);
     }
   }
@@ -280,7 +273,7 @@ void allRotate() {
     // in steps of 1 degree
     for (int s = 0; s < PWM_NUM; s++) {
       servo[s].write(pos);  // tell servo to go to position in variable 'pos'
-      delay(1);  // waits 15ms for the servo to reach the position
+      delay(1);             // waits 15ms for the servo to reach the position
       Serial.println(pos);
     }
   }
@@ -298,7 +291,6 @@ void allRotateWithIMU() {
     Serial.println(ypr[2]);
   }
 }
-
 
 // byte shutOrder[] = {4, 7, 8, 11, 0, 5, 6, 1, 2, 9, 10, 3};
 // byte shutOrder[] = { 1, 2, 3, 5, 6, 8, 9, 10, 4, 7, 8, 11,};
