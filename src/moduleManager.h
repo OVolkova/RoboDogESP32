@@ -276,15 +276,6 @@ void readSignal() {
   }
 }
 
-// — read human sensors (top level) —
-void readHuman() {
-
-}
-// — generate behavior by fusing all sensors and instruction
-String decision() {
-  return "";
-}
-
 void read_sound() {
 }
 

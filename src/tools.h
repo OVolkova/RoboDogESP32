@@ -179,21 +179,7 @@ void leftTrimSpaces(char *s, int *len) {
   strcpy(s, head);
 }
 
-void printCmd() {
-  PTF("lastT:");
-  PT(lastToken);
-  PTF("\tT:");
-  PT(token);
-  PTF("\tLastCmd:");
-  PT(lastCmd);
-  PTF("\tCmd:");
-  printCmdByType(token, newCmd);
-}
-
 void resetCmd() {
-  // PTL("Reset Cmd");
-  // printCmd();
-  
   lastToken = token;
   newCmdIdx = 0;
   if (token != T_SKILL && token != T_SKILL_DATA && token != T_SERVO_CALIBRATE && token != T_SERVO_FEEDBACK && token != T_SERVO_FOLLOW && token != T_CPG && token != T_CPG_BIN)
