@@ -224,7 +224,6 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
       fineAdjustQ = true;
       // updateGyroQ = true;
       gyroBalanceQ = true;
-      autoSwitch = RANDOM_MIND;
       initialBoot = false;
     }
     if (token != T_REST && newCmdIdx < 5)
@@ -339,158 +338,6 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
     }
 #endif
       case T_GYRO:
-      case T_RANDOM_MIND:
-        {
-          if (token == T_RANDOM_MIND) {
-            autoSwitch = !autoSwitch;
-            token = autoSwitch ? 'Z' : 'z';  // G for activated gyro
-          }
-#ifdef GYRO_PIN
-      else if (token == T_GYRO)
-      {
-        if (cmdLen == 0)
-        {
-          gyroBalanceQ = !gyroBalanceQ;
-          token = gyroBalanceQ ? 'G' : 'g'; // G for activated gyro
-        }
-        else
-        {
-          if (newCmd[0] == C_GYRO_CALIBRATE)
-          {
-            shutServos();
-            PTLF("Setting updateGyroQ to false...");
-            updateGyroQ = false;
-            if (newCmd[1] != C1_GYRO_CALIBRATE_IMMEDIATELY)
-            {
-              PTLF("\nPut the robot FLAT on the table and don't touch it during calibration.");
-              beep(8, 500, 500, 5);
-              beep(15, 500, 500, 1);
-            }
-            
-            // Wait for IMU task to terminate completely
-            if (TASK_imu != NULL) {
-//<<<<<<< HEAD
-              PTLF("Waiting for IMU task to terminate before calibration...");
-              // Wait for IMU task to terminate
-              while (eTaskGetState(TASK_imu) != eDeleted) {
-                  if(eTaskGetState(TASK_imu)== eReady){
-                      TASK_imu = NULL;
-                      break;
-                  }
-                vTaskDelay(100 / portTICK_PERIOD_MS);
-              }
-//=======
-//              eTaskState taskState = eTaskGetState(TASK_imu);
-//              PTHL("Task state:", taskState);
-//            
-//              if (taskState != eDeleted) {
-//                // Wait for task to terminate naturally
-//                PTLF("Waiting for IMU task to terminate...");
-//                unsigned long startTime = millis();
-//                const unsigned long timeout = 3000; // 3 second timeout
-//                
-//                // Wait for timeout
-//                while (TASK_imu != NULL && (millis() - startTime) <= timeout) {
-//                  delay(200);
-//                }
-//                
-//                // Handle timeout
-//                if (TASK_imu != NULL) {
-//                  PTLF("IMU task termination timeout - set task handle to NULL");
-//                  TASK_imu = NULL;    // Set task handle to NULL
-//                }
-//              }
-//                delay(50);  // Wait for IMU task to fully terminate
-//>>>>>>> pr/35
-            }
-            
-            // Create calibration task to run on core 0
-            xTaskCreatePinnedToCore(
-                taskCalibrateImuUsingCore0,         // Task function
-                "taskCalibrateImuUsingCore0",       // Task name
-                1800,                               // Task stack size
-                NULL,                               // Task parameters
-                1,                                  // Task priority
-                &taskCalibrateImuUsingCore0_handle, // Task handle
-                0                                   // Task core number to run on
-            );
-            
-            // Wait for updateGyroQ to be re-set to true, indicating calibration completion
-            unsigned long waitStart = millis();
-            const unsigned long maxWaitTime = 10000; // Maximum waiting time 10 seconds
-            
-            while (!updateGyroQ) {
-              if (millis() - waitStart > maxWaitTime) {
-                PTLF("Timeout waiting for calibration to complete. Forcing continuation.");
-                updateGyroQ = true; // Force continuation
-                break;
-              }
-              vTaskDelay(100 / portTICK_PERIOD_MS);
-            }
-            
-            PTLF("Calibration completed, allowing IMU to stabilize...");
-            delay(3000); // Allow IMU to stabilize after calibration
-            beep(18, 50, 50, 6);
-
-             // create IMU task
-             xTaskCreatePinnedToCore(taskIMU,        // Task function
-              "TaskIMU",                             // Task name
-              1500,                                  // Task stack size
-              &updateGyroQ,                          // Task parameters
-              1,                                     // Task priority
-              &TASK_imu,                             // Task handle
-              0);                                    // Task core number to run on
-
-            // Wait for task creation to complete
-            delay(100);
-            
-            // Get task handle, for subsequent operations
-            if (TASK_imu == NULL) {
-              TASK_imu = xTaskGetHandle("TaskIMU");
-              if (TASK_imu == NULL) {
-                PTLF("Warning: Failed to get IMU task handle!");
-              } else {
-                PTLF("IMU task created successfully");
-              }
-            }
-          }
-          else
-          {
-            byte i = 0;
-            while (newCmd[i] != '\0')
-            {
-              if (toupper(newCmd[i]) == C_GYRO_FINENESS)
-              {                                               // if newCmd[i] is 'f' or 'F'
-                fineAdjustQ = (newCmd[i] == C_GYRO_FINENESS); // if newCmd[i] == T_GYRO_FINENESS, fineAdjustQ is true. else newCmd[i] == C_GYRO_FINENESS_OFF, fineAdjustQ is false.
-                token = fineAdjustQ ? 'G' : 'g';              // G for activated gyro
-              }
-              else if (toupper(newCmd[i]) == C_GYRO_BALANCE)  // if newCmd[i] is 'b' or 'B'
-                gyroBalanceQ = (newCmd[i] == C_GYRO_BALANCE); // if newCmd[i] == T_GYRO_FINENESS, gyroBalanceQ is true. else is false.
-              else if (toupper(newCmd[i]) == C_GYRO_UPDATE)  // if newCmd[i] is 'u' or 'U' - Update gyro reading
-                updateGyroQ = (newCmd[i] == C_GYRO_UPDATE); // if newCmd[i] == 'U', updateGyroQ is true. else 'u', updateGyroQ is false.
-              else if (toupper(newCmd[i]) == C_PRINT)
-              {                                      // if newCmd[i] is 'p' or 'P'
-                printGyroQ = (newCmd[i] == C_PRINT); // if newCmd[i] == T_GYRO_PRINT, always print gyro. else only print once
-                print6Axis();
-              }
-              else if (newCmd[i] == '?')
-              {
-                PTF("Gyro state:");
-                PTT(" Update-", updateGyroQ);
-                PTT(" Balance-", gyroBalanceQ);
-                PTT(" Print-", printGyroQ);
-                PTTL(" Frequency-", fineAdjustQ);
-              }
-              i++;
-            }
-            imuSkip = fineAdjustQ ? IMU_SKIP : IMU_SKIP_MORE;
-            runDelay = fineAdjustQ ? delayMid : delayShort;
-          }
-        }
-      }
-#endif
-          break;
-        }
       case T_PAUSE:
         {
           tStep = !tStep;             // tStep can be -1
@@ -1178,7 +1025,7 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
       printToAllPorts(token);                     // postures, gaits and other tokens can confirm completion by sending the token back
       if (lastToken == T_SKILL
           && (lowerToken == T_GYRO || lowerToken == T_INDEXED_SIMULTANEOUS_ASC || lowerToken == T_INDEXED_SEQUENTIAL_ASC
-              || lowerToken == T_PAUSE || token == T_JOINTS || token == T_RANDOM_MIND || token == T_BALANCE_SLOPE
+              || lowerToken == T_PAUSE || token == T_JOINTS || token == T_BALANCE_SLOPE
               || token == T_ACCELERATE || token == T_DECELERATE || token == T_TILT))
         token = T_SKILL;
     }

@@ -55,15 +55,12 @@
    BiBoard2 (16)  skip 0~8  skip 0~8  skip0~4
 */
 
-// #define RevB
-#define RevDE
 #define SERIAL_TIMEOUT 10  // 5 may cut off the message
 #define SERIAL_TIMEOUT_LONG 200
 
 #define BOARD "B02"
-
-
 #define DATE "251121"  // YYMMDD
+
 String SoftwareVersion = "";
 String uniqueName = "";
 
@@ -219,7 +216,6 @@ bool newBoard = false;
 #define T_WIFI_INFO 'w'
 // #define T_XLEG 'x'
 #define T_LEARN 'x'
-#define T_RANDOM_MIND 'z'  // toggle random behaviors
 
 #define T_READ 'R'  // read pin     R
 #define T_WRITE 'W'  // write pin                      W
@@ -312,7 +308,6 @@ bool cmdFromWeb = false;
 
 // Other booleans
 bool interruptedDuringBehavior = false;
-bool autoSwitch = false;
 bool workingStiffness = true;
 bool imuLockI2c = false;
 
@@ -423,7 +418,6 @@ int balanceSlope[2] = {1, 1};  // roll, pitch
 #endif
 #include "espServo.h"
 #include "motion.h"
-#include "randomMind.h"
 #include "skill.h"
 #include "moduleManager.h"
 #ifdef WEB_SERVER
@@ -494,9 +488,6 @@ void initRobot() {
   newCmd[0] = '\0';
   skill = new Skill();
   skillList = new SkillList();
-  for (byte i = 0; i < randomMindListLength; i++) {
-    randomBase += choiceWeight[i];
-  }
 
 #ifdef IR_PIN
   irrecv.enableIRIn();

@@ -273,13 +273,6 @@ void readSignal() {
     if (moduleActivatedQ[indexOfModule(EXTENSION_PIR)])
       read_PIR();
 #endif
-    // powerSaver -> 4
-    // other -> 5
-    // randomMind -> 100
-    if (autoSwitch) {
-      randomMind();             // make the robot do random demos
-      powerSaver(POWER_SAVER);  // make the robot rest after a certain period, the unit is seconds
-    }
   }
 }
 
