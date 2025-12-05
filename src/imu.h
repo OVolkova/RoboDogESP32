@@ -1,4 +1,4 @@
-#ifdef GYRO_PIN
+
 #include "mpu6050/src/I2Cdev.h"
 #include "mpu6050/src/MPU6050_6Axis_MotionApps_V6_12.h"
 
@@ -950,5 +950,3 @@ void taskCalibrateImuUsingCore0(void *parameter) {
   printToAllPorts("\nCalibration done.\n");  // for confirming the desktop app
   vTaskDelete(NULL);  // Terminate this task if an error occurs in the loop
 }
-
-#endif

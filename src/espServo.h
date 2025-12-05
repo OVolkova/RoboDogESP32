@@ -284,7 +284,6 @@ void allRotate() {
   }
 }
 
-#ifdef GYRO_PIN
 
 void allRotateWithIMU() {
   for (int s = 0; s < PWM_NUM; s++) {
@@ -295,7 +294,7 @@ void allRotateWithIMU() {
     Serial.println(ypr[2]);
   }
 }
-#endif
+
 
 // byte shutOrder[] = {4, 7, 8, 11, 0, 5, 6, 1, 2, 9, 10, 3};
 // byte shutOrder[] = { 1, 2, 3, 5, 6, 8, 9, 10, 4, 7, 8, 11,};
