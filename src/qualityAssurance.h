@@ -26,7 +26,7 @@ byte imuBad1[] = { 19, 17, 16, 14, 12,
 #define MEAN_THRESHOLD 0.5
 #define STD_THRESHOLD 0.2
 
-#ifdef GYRO_PIN
+
 void testIMU() {
   bool intendedIMU = false;
 
@@ -89,7 +89,7 @@ void testIMU() {
     delete[] history[a];
   delete[] history;
 };
-#endif
+
 
 #ifdef IR_PIN
 bool testIR() {
@@ -166,9 +166,9 @@ void QA() {
     if (choice == 'Y' || choice == 'y')
 
     {
-#ifdef GYRO_PIN
+
       testIMU();
-#endif
+
       // tests...
       PTL("\nServo test: all servos should rotate and in sync\n");
       loadBySkillName("ts");  // test EEPROM

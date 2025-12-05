@@ -9,7 +9,6 @@ void finishWebCommand();
 #endif
 
 void dealWithExceptions() {
-#ifdef GYRO_PIN
 
   // Handle turning exception regardless of gyroBalanceQ status
   if (imuException == IMU_EXCEPTION_TURNING) {
@@ -183,7 +182,7 @@ void dealWithExceptions() {
   }
   if (tQueue->cleared() && runDelay <= delayException)
     runDelay = delayMid;
-#endif
+
 
 #ifdef WEB_SERVER  // check if to reset the wifi manager and reboot
   if (digitalRead(0) == LOW) {
@@ -581,11 +580,11 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
                 transform(targetFrame, 1, 1);
                 delay(10);
               }
-#ifdef GYRO_PIN
-              else if (token == T_TILT) {
+
+              else if (token == T_TILT) { // GYRO_PIN
                 yprTilt[target[0]] = target[1];
               }
-#endif
+
               else if (token == T_MEOW) {
                 meow(random() % 2 + 1, (random() % 4 + 2) * 10);
               } else if (token == T_BEEP) {
@@ -1038,11 +1037,8 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
     skill->perform();
     if (skill->period > 1) {
       delay(delayShort
-            + max(0, int(runDelay
-#ifdef GYRO_PIN
-                         - gyroBalanceQ * (max(fabs(ypr[1]) / 2, fabs(ypr[2])) / 20)  // accelerate gait when tilted
+            + max(0, int(runDelay - gyroBalanceQ * (max(fabs(ypr[1]) / 2, fabs(ypr[2])) / 20)  // accelerate gait when tilted
                              / (!fineAdjustQ && !mpuQ ? 4 : 1)                        // reduce the adjust if not using mpu6050
-#endif
                          )));
     }
     if (skill->period < 0) {
@@ -1065,14 +1061,14 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
       for (int i = 0; i < DOF; i++)
         currentAdjust[i] = 0;
       printToAllPorts(token);  // behavior can confirm completion by sending the token back
-#ifdef GYRO_PIN
+
       if (xyzReal[2] > 0 && (fabs(ypr[1]) > 45 || fabs(ypr[2]) > 45)) {  // wait for imu to update
         while (fabs(ypr[1]) > 10 || fabs(ypr[2]) > 10) {
           // print6Axis();
           delay(IMU_PERIOD);
         }
       }
-#endif
+
     }
     // if (imuException && lastCmd[strlen(lastCmd) - 1] < 'L' && skillList->lookUp(lastCmd) > 0) {  //can be simplified
     // here.

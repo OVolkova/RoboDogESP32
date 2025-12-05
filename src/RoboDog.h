@@ -71,8 +71,6 @@ String uniqueName = "";
 #define WEB_SERVER // toggle web server
 // #define SHOW_FPS // toggle FPS display
 
-#define GYRO_PIN  // toggle the Inertia Measurement Unit (IMU), i.e. the gyroscope
-
 #define SERVO_FREQ 240
 
 // Tutorial: https://bittle.petoi.com/11-tutorial-on-creating-new-skills
@@ -410,9 +408,9 @@ int balanceSlope[2] = {1, 1};  // roll, pitch
 #include "configConstants.h"
 #include "bluetoothManager.h"
 #include "io.h"
-#ifdef GYRO_PIN
+
 #include "imu.h"
-#endif
+
 #ifdef IR_PIN
 #include "infrared.h"
 #endif
@@ -478,10 +476,9 @@ void initRobot() {
 #endif
 #endif
 
-#ifdef GYRO_PIN
+
   if (updateGyroQ)
     imuSetup();
-#endif
 
   servoSetup();
   lastCmd[0] = '\0';
@@ -504,7 +501,6 @@ void initRobot() {
   
   initModuleManager();
 
-#ifdef GYRO_PIN
   // readIMU(); // ypr is slow when starting up. leave enough time between IMU initialization and this reading
   if (!moduleDemoQ && updateGyroQ){
     delay(500);
@@ -518,7 +514,7 @@ void initRobot() {
     print6Axis();
     tQueue->addTask((imuException) ? T_SERVO_CALIBRATE : T_REST, "");
   }
-#endif
+
   PTL("Ready!");
   // beep(24, 50);
   idleTimer = millis();

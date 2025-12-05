@@ -160,11 +160,10 @@ void transform(T *target, byte angleDataRatio = 1, float speedRatio = 1, byte of
     //   return;
     // }
     for (int s = 0; s <= steps; s++) {
-#ifdef GYRO_PIN
       if (updateGyroQ && printGyroQ) {
         print6Axis();
       }
-#endif
+
       for (byte i = offset; i < DOF; i++) {
         float dutyAng = (target[i - offset] * angleDataRatio + (steps == 0 ? 0 : (1 + cos(M_PI * s / steps)) / 2 * diff[i - offset]));
         calibratedPWM(i, dutyAng);
@@ -232,7 +231,7 @@ float adjust(byte i, bool postureQ = false) {
   return currentAdjust[i];
 }
 
-#ifdef GYRO_PIN
+
 int calibratePincerByVibration(int start, int end, int step, int threshold = 10000 * gFactor) {
   PTT("Try ", start);
   PTT(" ~ ", end);
@@ -272,7 +271,7 @@ int calibratePincerByVibration(int start, int end, int step, int threshold = 100
   }
   return end;
 }
-#endif
+
 
 int8_t amplitude = 10;
 int8_t sideRatio = 0;

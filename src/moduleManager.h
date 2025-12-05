@@ -292,13 +292,10 @@ void read_GPS() {
 }
 
 void readEnvironment() {
-#ifdef GYRO_PIN
-  // if (updateGyroQ && !(frame % imuSkip))
-  //   imuUpdated = readIMU();
   if (updateGyroQ)
     if (imuUpdated && printGyroQ)
       print6Axis();
-#endif
+
   read_sound();
   read_GPS();
 }
