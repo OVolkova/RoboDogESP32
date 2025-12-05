@@ -97,6 +97,9 @@ template<typename T> String list2String(T *arr, byte len = DOF) {
   return temp;
 }
 
+// DEBUG/TEST FUNCTION: Prints an indexed table of array values with headers
+// Purpose: Debugging tool to visualize array data with row/column indices
+// Usage: Pass any array to display its contents in table format with index numbers
 template<typename T> void printTable(T *list) {
   printRange(0, DOF);
   printList(list, DOF);
@@ -138,10 +141,6 @@ template<typename T> void printCmdByType(char t, T *data) {
   }
 }
 
-// template<typename T, typename T1> void arrayNCPY(T *destination, const T1 *source, int len) {  //deep copy regardless of '\0'
-//   for (int i = 0; i < len; i++)
-//     destination[i] = min((T1)125, max((T1)-125, source[i]));
-// }
 template<typename T, typename T1> void arrayNCPY(T *destination, const T1 *source, int len) {  //deep copy regardless of '\0'
   for (int i = 0; i < len; i++) {
     // destination[i] = min((T1)125, max((T1)-125, source[i]));
@@ -163,6 +162,9 @@ template<typename T> void getExtreme(T *arr, T *extreme, int len = DOF) {
   }
 }
 
+// DEBUG/TEST FUNCTION: Calculates and prints frames per second (FPS)
+// Purpose: Performance monitoring to measure main loop execution speed
+// Usage: Call in loop() to track real-time performance, identifies bottlenecks and timing issues
 void FPS() {
   if (millis() - loopTimer < 1000)
     fps++;
@@ -183,21 +185,7 @@ void leftTrimSpaces(char *s, int *len) {
   strcpy(s, head);
 }
 
-void printCmd() {
-  PTF("lastT:");
-  PT(lastToken);
-  PTF("\tT:");
-  PT(token);
-  PTF("\tLastCmd:");
-  PT(lastCmd);
-  PTF("\tCmd:");
-  printCmdByType(token, newCmd);
-}
-
 void resetCmd() {
-  // PTL("Reset Cmd");
-  // printCmd();
-  
   lastToken = token;
   newCmdIdx = 0;
   if (token != T_SKILL && token != T_SKILL_DATA && token != T_SERVO_CALIBRATE && token != T_SERVO_FEEDBACK && token != T_SERVO_FOLLOW && token != T_CPG && token != T_CPG_BIN)

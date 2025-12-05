@@ -142,48 +142,10 @@ String irParser(String raw) {
     }
     return gait + direct;
   }
-  //  if (raw == "B") {
-  //    if ( gait == "bk")
-  //      runDelay = max(runDelay - delayStep, delayShort);
-  //    else {
-  //      runDelay = min(runDelay + delayStep, delayLong);
-  //      if (runDelay == delayLong) {
-  //        gait = (gait == "vt") ? "bk" : "vt";
-  //        runDelay = delayMid;
-  //      }
-  //    }
-  //    PTL(gait + direct);
-  //    if (gait == "bk")
-  //      return gait;
-  //    else
-  //      return gait + direct;
-  //  }
-  //  if (raw == "F" || raw == "L" || raw == "R") {
-  //    direct = raw[0];
-  //    if (direct == 'F') {
-  //      if ( gait == "bk") {
-  //        runDelay = min(runDelay + delayStep, delayLong);
-  //        if (runDelay == delayLong) {
-  //          //          runDelay = delayMid;
-  //          gait = "vt";
-  //          return gait;
-  //        }
-  //      }
-  //      else {
-  //        runDelay = max(runDelay - delayStep, delayShort);
-  //        if (runDelay == delayShort && gait == "vt") {
-  //          //          runDelay = delayMid;
-  //          gait = "wk";
-  //        }
-  //      }
-  //    }
-  //    return gait + direct;
-  //  }
   else if (raw == "vt" || raw == "cr" || raw == "wk" || raw == "mh" || raw == "tr" || raw == "rn" || raw == "bd" || raw == "ph") {
     gait = raw;
     return gait + direct;
   } else {
-    walkingQ = false;
     return raw;
   }
 }

@@ -108,49 +108,44 @@ byte imuBad2[] = {20, 12, 18, 12, 16, 12, 16, 16, 16, 16, 16, 8};  // fail durin
    http://code.google.com/p/arduino/issues/detail?id=958
    ========================================================================= */
 
-// uncomment "OUTPUT_READABLE_QUATERNION" if you want to see the actual
-// quaternion components in a [w, x, y, z] format (not best for parsing
-// on a remote host such as Processing or something though)
-// #define OUTPUT_READABLE_QUATERNION
+// Set to 1 to see the actual quaternion components in a [w, x, y, z] format
+// (not best for parsing on a remote host such as Processing or something though)
+#define OUTPUT_READABLE_QUATERNION 0
 
-// uncomment "OUTPUT_READABLE_EULER" if you want to see Euler angles
-// (in degrees) calculated from the quaternions coming from the FIFO.
-// Note that Euler angles suffer from gimbal lock (for more info, see
-// http://en.wikipedia.org/wiki/Gimbal_lock)
-// #define OUTPUT_READABLE_EULER
+// Set to 1 to see Euler angles (in degrees) calculated from the quaternions
+// coming from the FIFO. Note that Euler angles suffer from gimbal lock
+// (for more info, see http://en.wikipedia.org/wiki/Gimbal_lock)
+#define OUTPUT_READABLE_EULER 0
 
-// uncomment "OUTPUT_READABLE_YAWPITCHROLL" if you want to see the yaw/
-// pitch/roll angles (in degrees) calculated from the quaternions coming
-// from the FIFO. Note this also requires gravity vector calculations.
-// Also note that yaw/pitch/roll angles suffer from gimbal lock (for
-// more info, see: http://en.wikipedia.org/wiki/Gimbal_lock)
-#define OUTPUT_READABLE_YAWPITCHROLL
+// Set to 1 to see the yaw/pitch/roll angles (in degrees) calculated from
+// the quaternions coming from the FIFO. Note this also requires gravity
+// vector calculations. Also note that yaw/pitch/roll angles suffer from
+// gimbal lock (for more info, see: http://en.wikipedia.org/wiki/Gimbal_lock)
+#define OUTPUT_READABLE_YAWPITCHROLL 1
 
-// uncomment "OUTPUT_READABLE_REALACCEL" if you want to see acceleration
-// components with gravity removed. This acceleration reference frame is
-// not compensated for orientation, so +X is always +X according to the
-// sensor, just without the effects of gravity. If you want acceleration
-// compensated for orientation, us OUTPUT_READABLE_WORLDACCEL instead.
-// #define OUTPUT_READABLE_REALACCEL
+// Set to 1 to see acceleration components with gravity removed. This
+// acceleration reference frame is not compensated for orientation, so +X
+// is always +X according to the sensor, just without the effects of gravity.
+// If you want acceleration compensated for orientation, use OUTPUT_READABLE_WORLDACCEL instead.
+#define OUTPUT_READABLE_REALACCEL 0
 /* REALACCEL represents the acceleration related to the sensor.
    Even if the robot is not moving, it will be large if the sensor is tilted.
    Because gravity has a component in that tilted direction.
    It's useful to use aaReal.z to determine if the sensor is flipped up-side-down.
 */
 
-// uncomment "OUTPUT_READABLE_WORLDACCEL" if you want to see acceleration
-// components with gravity removed and adjusted for the world frame of
-// reference (yaw is relative to initial orientation, since no magnetometer
-// is present in this case). Could be quite handy in some cases.
-#define OUTPUT_READABLE_WORLDACCEL
+// Set to 1 to see acceleration components with gravity removed and adjusted
+// for the world frame of reference (yaw is relative to initial orientation,
+// since no magnetometer is present in this case). Could be quite handy in some cases.
+#define OUTPUT_READABLE_WORLDACCEL 1
 /* WORLDACCEL represents the acceleration related to the world reference.
    It will be close to zero as long as the robot is not moved.
    It's useful to detect the wobbling about the sensor's original position.
 */
 
-// uncomment "OUTPUT_TEAPOT" if you want output that matches the
-// format used for the InvenSense teapot demo
-// #define OUTPUT_TEAPOT
+// Set to 1 if you want output that matches the format used for
+// the InvenSense teapot demo
+#define OUTPUT_TEAPOT 0
 class mpu6050p : public MPU6050 {
   // MPU control/status vars
   bool dmpReady = false;   // set true if DMP init was successful
@@ -333,7 +328,7 @@ public:
     read_mpu6050();
   }
   void print6AxisMacro() {
-#ifdef OUTPUT_READABLE_QUATERNION
+#if OUTPUT_READABLE_QUATERNION
     // display quaternion values in easy matrix form: w x y z
     PT("quat\t");
     PT(q.w);
@@ -346,7 +341,7 @@ public:
     PT("\t");
 #endif
 
-#ifdef OUTPUT_READABLE_EULER
+#if OUTPUT_READABLE_EULER
     // display Euler angles in degrees
     PT("euler\t");
     PT(euler[0] * 180 / M_PI);
@@ -357,7 +352,7 @@ public:
     PT("\t");
 #endif
 
-#ifdef OUTPUT_READABLE_YAWPITCHROLL
+#if OUTPUT_READABLE_YAWPITCHROLL
     // display angles in degrees
     PT("ypr\t");
     PT(ypr[0]);
@@ -385,7 +380,7 @@ public:
     */
 #endif
 
-#ifdef OUTPUT_READABLE_WORLDACCEL
+#if OUTPUT_READABLE_WORLDACCEL
     // display initial world-frame acceleration, adjusted to remove gravity
     // and rotated based on known orientation from quaternion
     PT("aworld\t");
@@ -397,7 +392,7 @@ public:
     PT("\t");
 #endif
 
-#ifdef OUTPUT_READABLE_REALACCEL
+#if OUTPUT_READABLE_REALACCEL
     // display real acceleration, adjusted to remove gravity
     PT("areal\t");
     PT(aaReal.x);
@@ -514,14 +509,14 @@ void icm42670Setup(bool calibrateQ = true) {
 // ===                      INITIAL SETUP                       ===
 // ================================================================
 
-#define PRINT_ACCELERATION
+#define PRINT_ACCELERATION 1
 void print6Axis() {
   if (!updateGyroQ)
     return;
   char buffer[50];  // Adjust buffer size as needed
 
   if (icmQ) {
-#ifdef PRINT_ACCELERATION
+#if PRINT_ACCELERATION
     sprintf(buffer, "ICM:%6.2f%6.2f%6.2f%7.1f%7.1f%7.1f\t",  //
             icm.a_real[0] * GRAVITY, icm.a_real[1] * GRAVITY, icm.a_real[2] * GRAVITY, -icm.ypr[0], icm.ypr[1], icm.ypr[2]);
 #else
@@ -531,7 +526,7 @@ void print6Axis() {
   }
 
   if (mpuQ) {
-#ifdef PRINT_ACCELERATION
+#if PRINT_ACCELERATION
     sprintf(buffer, "MCU:%6.2f%6.2f%6.2f%7.1f%7.1f%7.1f",  // 7x6 = 42
             mpu.a_real[0], mpu.a_real[1], mpu.a_real[2], -mpu.ypr[0], mpu.ypr[1], mpu.ypr[2]);  //, aaWorld.z);
 #else
@@ -551,7 +546,7 @@ TaskHandle_t taskCalibrateImuUsingCore0_handle = NULL;  // -ee- Use to access ta
 bool readIMU() {
   bool updated = false;
   if (updateGyroQ && !(frame % imuSkip)) {
-#ifndef USE_WIRE1
+#if !USE_WIRE1
     // Use FreeRTOS delay function and add timeout mechanism
     unsigned long waitStart = millis();
     const unsigned long maxWaitTime = 500; // Maximum wait time 500ms

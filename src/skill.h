@@ -398,9 +398,6 @@ void loadBySkillName(const char *skillName) {  // get lookup information from on
   int skillIndex;
   skillIndex = skillList->lookUp(skillName);
   if (skillIndex != -1) {
-    // if (skill != NULL)
-    //   delete[] skill;
-
     skill->offsetLR = (lr == 'L' ? 30 : (lr == 'R' ? -30 : 0));
     skill->buildSkill(skillList->get(skillIndex)->index);
     strcpy(newCmd, skill->skillName);

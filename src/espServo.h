@@ -264,7 +264,9 @@ void readAllFeedbackFast()  // returns the pulse width in microseconds
   // PTL();
 }
 
-
+// DEBUG/TEST FUNCTION: Rotates all servos through a full range sweep (-50 to +50 degrees)
+// Purpose: Hardware testing to verify all servos are responding correctly
+// Usage: Call manually during hardware diagnostics or initial setup testing
 void allRotate() {
   for (int pos = -50; pos < 50; pos += 1) {  // goes from 0 degrees to 180 degrees
     // in steps of 1 degree
@@ -284,7 +286,9 @@ void allRotate() {
   }
 }
 
-
+// DEBUG/TEST FUNCTION: Controls all servos based on IMU yaw and pitch readings
+// Purpose: Testing IMU integration with servo system, verifying sensor-actuator feedback loop
+// Usage: Call during IMU-servo calibration or to test gyroscope-based balance adjustments
 void allRotateWithIMU() {
   for (int s = 0; s < PWM_NUM; s++) {
     servo[s].write(90 + ypr[1] + ypr[2]);  // tell servo to go to position in variable 'pos'
