@@ -138,10 +138,6 @@ template<typename T> void printCmdByType(char t, T *data) {
   }
 }
 
-// template<typename T, typename T1> void arrayNCPY(T *destination, const T1 *source, int len) {  //deep copy regardless of '\0'
-//   for (int i = 0; i < len; i++)
-//     destination[i] = min((T1)125, max((T1)-125, source[i]));
-// }
 template<typename T, typename T1> void arrayNCPY(T *destination, const T1 *source, int len) {  //deep copy regardless of '\0'
   for (int i = 0; i < len; i++) {
     // destination[i] = min((T1)125, max((T1)-125, source[i]));

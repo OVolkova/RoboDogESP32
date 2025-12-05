@@ -288,7 +288,6 @@ String webResponse = "";
 /*  These "Q" booleans are conditions that are checked to activate or deactivate different states.
     A condition set to true activates (turns on) a state.
 */
-bool autoLedQ = false;
 bool updateGyroQ = true;
 bool fineAdjustQ = true;
 bool gyroBalanceQ = true;  // true = CONTINUOUSLY access recovery options in dealWithExceptions().
@@ -296,10 +295,8 @@ bool printGyroQ = false;  // true = CONTINUOUSLY access print6Axis() which print
 bool readFeedbackQ = false;  // true = CONTINUOUSLY access servoFeedback() which prints servo angles.
 bool followFeedbackQ = false;  // true = CONTINUOUSLY access servoFollow() which follows servo angles as servos are
                                // manipulated and automatically calls servoFeedback() to show updated servo angles.
-bool walkingQ = false;
 bool manualHeadQ = false;
 bool nonHeadJointQ = false;
-bool manualEyeColorQ = false;
 bool rebootForWifiManagerQ = false;
 bool cmdFromWeb = false;
 // bool keepDirectionQ = true;
@@ -350,7 +347,6 @@ int delayLong = 20;
 int delayMid = 8;
 int delayException = 5;
 int delayShort = 3;
-int delayStep = 1;
 int delayPrevious;
 int runDelay = delayMid;
 
@@ -454,19 +450,6 @@ void initRobot() {
   if (rebootForWifiManagerQ)
   {
     startWifiManager();
-    // Create a task to run webServer.handleClient() on core 1
-    if (webServerConnected) {
-      // Comment out webServerTask as async version doesn't need dedicated task
-      // xTaskCreatePinnedToCore(
-      //     webServerTask,   // Task function
-      //     "WebServerTask", // Task name
-      //     4096,            // Stack size
-      //     NULL,            // Task parameters
-      //     1,               // Task priority
-      //     NULL,            // Task handle
-      //     0                // Core ID (0 for core 0)
-      // );
-    }
   }
 #else
   if (rebootForWifiManagerQ)

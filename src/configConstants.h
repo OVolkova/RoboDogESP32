@@ -124,12 +124,6 @@ void resetAsNewBoard(char mark) {
   ESP.restart();
 }
 
-char data[] =
-    " The quick brown fox jumps over the lazy dog. \
-The five boxing wizards jump quickly. Pack my box with five dozen liquor jugs.";  // data to write
-
-// char data[]={16,-3,5,7,9};
-
 void genBleID(int suffixDigits = 2) {
   const char *prefix ="Bittle" ;
 

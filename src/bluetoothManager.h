@@ -77,36 +77,6 @@ void blueSspSetup() {
   Serial.println("The SSP device is started, now you can pair it with Bluetooth!");
 }
 
-// void readBlueSSP() {
-//   if (confirmRequestPending)
-//   {
-//     if (Serial.available())
-//     {
-//       int dat = Serial.read();
-//       if (dat == 'Y' || dat == 'y')
-//       {
-//         SerialBT.confirmReply(true);
-//       }
-//       else
-//       {
-//         SerialBT.confirmReply(false);
-//       }
-//     }
-//   }
-//   else
-//   {
-//     if (Serial.available())
-//     {
-//       SerialBT.write(Serial.read());
-//     }
-//     if (SerialBT.available())
-//     {
-//       Serial.write(SerialBT.read());
-//     }
-//     delay(20);
-//   }
-// }
-
 // end of Richard Li's code
 #endif
 
