@@ -153,16 +153,15 @@ class PetoiAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
 static PetoiAdvertisedDeviceCallbacks* pAdvertisedDeviceCallbacks = nullptr;
 
 void PetoiBtStartScan() {
-  // 检查WebSocket连接状态，如果有活跃连接则延迟扫描
-#ifdef WEB_SERVER
+  // Check WebSocket connection status, if there are active connections delay scanning
   extern bool webServerConnected;
   extern std::map<uint8_t, bool> connectedClients;
 
   if (webServerConnected && !connectedClients.empty()) {
     PTLF("WebSocket clients active, delaying BLE scan...");
-    delay(2000);  // 等待WebSocket连接稳定
+    delay(2000);  // Wait for WebSocket connection to stabilize
   }
-#endif
+
 
   BLEDevice::init("");
   BLEScan* pBLEScan = BLEDevice::getScan();
@@ -178,10 +177,10 @@ void PetoiBtStartScan() {
   pBLEScan->setAdvertisedDeviceCallbacks(pAdvertisedDeviceCallbacks);
 
   // Optimize scan parameters to minimize WiFi interference
-  pBLEScan->setInterval(2000);     // 增加扫描间隔，减少对WiFi的干扰
-  pBLEScan->setWindow(200);        // 减少扫描窗口，降低资源占用
-  pBLEScan->setActiveScan(false);  // 使用被动扫描，减少功耗和干扰
-  pBLEScan->start(3, false);       // 减少扫描时间到3秒
+  pBLEScan->setInterval(2000);     // Increase scan interval, reduce WiFi interference
+  pBLEScan->setWindow(200);        // Reduce scan window, lower resource usage
+  pBLEScan->setActiveScan(false);  // Use passive scanning, reduce power consumption and interference
+  pBLEScan->start(3, false);       // Reduce scanning time to 3 seconds
 }
 
 void PetoiBtStopScan() {

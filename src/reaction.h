@@ -2,11 +2,11 @@
 #include "esp32-hal.h"
 
 // Async web server function declarations
-#ifdef WEB_SERVER
+
 void completeWebTask();
 void errorWebTask(String errorMessage);
 void finishWebCommand();
-#endif
+
 
 void dealWithExceptions() {
   // Handle turning exception regardless of gyroBalanceQ status
@@ -175,7 +175,7 @@ void dealWithExceptions() {
   }
   if (tQueue->cleared() && runDelay <= delayException) runDelay = delayMid;
 
-#ifdef WEB_SERVER  // check if to reset the wifi manager and reboot
+  // check if to reset the wifi manager and reboot
   if (digitalRead(0) == LOW) {
     delay(5);
     // PTLF("Debounce boot button.");
@@ -195,7 +195,7 @@ void dealWithExceptions() {
     delay(200);
     ESP.restart();
   }
-#endif
+
 }
 
 // V_read / 4096 * 3.3 = V_real / ratio
@@ -264,29 +264,29 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
         printToAllPorts(config.getString("ID"));
         break;
       }
-#ifdef WEB_SERVER
+
       case T_WIFI_INFO: {
         if (!webServerConnected) {
           PTLF(
               "The wifi info should start with \'w\' and followed by ssid and password, separated by %.\n e.g. "
               "w%WifiName%password");
           String wifiInfo = newCmd;
-          int delimiter = wifiInfo.indexOf('%', 2);  // 找到第二个%的位置
+          int delimiter = wifiInfo.indexOf('%', 2);  // Find the position of the second %
           if (delimiter != -1) {
             ssid = wifiInfo.substring(1, delimiter);
             password = wifiInfo.substring(delimiter + 1);
             PTHL("WifiSSID: ", ssid);
-            // 只显示密码的后4位，其余用*代替
+            // Only show the last 4 digits of the password, replace the rest with *
             String maskedPassword = "";
             if (password.length() > 4) {
               for (int i = 0; i < password.length() - 4; i++) { maskedPassword += "*"; }
               maskedPassword += password.substring(password.length() - 4);
             } else {
-              maskedPassword = password;  // 如果密码长度<=4，显示全部
+              maskedPassword = password;  // If password length <=4, show all
             }
             PTHL("Password: ", maskedPassword);
             webServerConnected = connectWifi(ssid, password);
-            // 清除密码变量，防止在内存中残留
+            // Clear password variable to prevent residue in memory
             password = "";
             if (webServerConnected) {
               //            PTHL("Successfully connected Wifi to IP Address: ", WiFi.localIP());
@@ -297,7 +297,7 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
               ESP.restart();
             } else {
               Serial.println("Timeout: Fail to connect Wifi!");
-              // 连接失败时也清除密码变量
+              // Also clear password variable when connection fails
               password = "";
             }
           }
@@ -309,7 +309,7 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
         }
         break;
       }
-#endif
+
       case T_GYRO:
       case T_PAUSE: {
         tStep = !tStep;             // tStep can be -1
@@ -966,9 +966,9 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
            token == T_DECELERATE || token == T_TILT))
         token = T_SKILL;
     }
-#ifdef WEB_SERVER
+
     finishWebCommand();
-#endif
+
     resetCmd();
   }
   if (tolower(token) == T_SKILL) {
@@ -1041,11 +1041,10 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
 }
 
 // Async web processing functions
-#ifdef WEB_SERVER
 void finishWebCommand() {
   if (cmdFromWeb) {
     completeWebTask();  // call async completion function
     // cmdFromWeb will be set to false in completeWebTask()
   }
 }
-#endif
+

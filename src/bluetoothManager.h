@@ -5,12 +5,11 @@
 #include "bleClient.h"
 #endif
 
-// 添加WiFi头文件以支持WiFi状态检查
-#ifdef WEB_SERVER
+// Add WiFi header file to support WiFi status checking
 #include <WiFi.h>
-#endif
 
-// 包含tools.h以获取调试打印宏的定义
+
+// Include tools.h to get debug print macro definitions
 #include "tools.h"
 
 #ifdef BT_SSP
@@ -75,17 +74,16 @@ void blueSspSetup() {
 // end of Richard Li's code
 #endif
 
-// 蓝牙模式管理函数实现
+// Bluetooth mode management function implementation
 void initBluetoothModes() {
   PTLF("Initializing Bluetooth modes...");
 
-  // 如果WiFi正在连接，等待一下避免资源竞争
-#ifdef WEB_SERVER
+  // If WiFi is connecting, wait to avoid resource competition
   if (WiFi.status() == WL_DISCONNECTED) {
     PTLF("Waiting for WiFi connection to stabilize before starting Bluetooth...");
     delay(1000);
   }
-#endif
+
 
   btModeDecisionStartTime = millis();  // Start 3 second decision timer
   btModeLastCheckTime = millis();      // Initialize check interval timer
@@ -94,13 +92,13 @@ void initBluetoothModes() {
 #ifdef BT_CLIENT
   PTLF("Starting BLE Client...");
   bleClientSetup();
-  delay(200);  // 增加启动时间，避免与WiFi冲突
+  delay(200);  // Increase startup time, avoid WiFi conflict
 
   unsigned long currentTime = millis();
 
   // Check 3 second decision timeout (using independent timer)
   while (currentTime - btModeDecisionStartTime < BT_MODE_DECISION_TIMEOUT) {
-    // 减少扫描频率，避免过度干扰WebSocket连接
+    // Reduce scan frequency, avoid excessive WebSocket connection interference
     if (currentTime - btModeLastCheckTime >= BT_MODE_CHECK_INTERVAL) {
       checkBtScan();
       if (btConnected) {
@@ -109,15 +107,15 @@ void initBluetoothModes() {
       }
       btModeLastCheckTime = currentTime;
     }
-    // 检查WebSocket连接状态，如果有活跃连接则减少扫描频率
-#ifdef WEB_SERVER
+    // Check WebSocket connection status, if there are active connections reduce scan frequency
+
     extern bool webServerConnected;
     extern std::map<uint8_t, bool> connectedClients;
 
     if (webServerConnected && !connectedClients.empty()) {
-      delay(500);  // 给WebSocket更多时间处理
+      delay(500);  // Give WebSocket more time to process
     }
-#endif
+
     delay(100);
     currentTime = millis();
   }
@@ -125,12 +123,12 @@ void initBluetoothModes() {
   if (activeBtMode != BT_MODE_CLIENT) {
     PTLF("Shutting down BLE Client...");
     shutdownBleClient();
-    delay(500);  // 给BLE堆栈更多时间完成清理
+    delay(500);  // Give BLE stack more time to complete cleanup
 
-    // 完全重新初始化BLE设备以切换到Server模式
+    // Completely reinitialize BLE device to switch to Server mode
     PTLF("Deinitializing BLE device...");
-    BLEDevice::deinit(false);  // 去初始化BLE设备，但保留内存
-    delay(500);                // 等待去初始化完成
+    BLEDevice::deinit(false);  // Deinitialize BLE device, but keep memory
+    delay(500);                // Wait for deinitialization to complete
   }
   if (activeBtMode != BT_MODE_CLIENT)
 #endif

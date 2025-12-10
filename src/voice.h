@@ -17,12 +17,12 @@
 // The reactions below are already defined in the program. You may use SkillComposer to design new skills then import
 // them into InstinctX.h Other serial commands are also supported, such as joint movements and melody
 
-// 说”开始学习“开始录音，最多10条
-// 说”结束学习“停止录入
-// 说出口令触发反应
-// 说”清除数据“删除所有自定义口令（无法删除单条口令）
-// 下列行为是程序中预设的，您可以用技能创作坊设计新技能并导入到 InstinctX.h
-// 支持其他的串口指令，比如活动关节和旋律
+// Say "start learning" to begin recording, up to 10 commands
+// Say "stop learning" to stop entering
+// Say the voice command to trigger reactions
+// Say "clear data" to delete all customized voice commands (cannot delete a single voice command)
+// The following behaviors are preset in the program. You can use Skill Composer to design new skills and import them into InstinctX.h
+// Supports other serial commands, such as joint movements and melody
 
 // #define VOICE_MODULE_SAMPLE
 String customizedCmdList[] = {
@@ -65,7 +65,7 @@ void set_voice(char* cmd) {  // send some control command directly to the module
   if (cmd[1] == 'a' ||
       cmd[1] ==
           'b') {  // enter "XAa" in the serial monitor or add button "X65,97" in the mobile app to switch to English
-    // 在串口监视器输入指令“XAa”或在手机app创建按键"X65,97"来切换到英文
+    // Enter command "XAa" in the serial monitor or create button "X65,97" in the mobile app to switch to English
     defaultLan = cmd[1];
     config.putChar("defaultLan", defaultLan);
     config.putChar("currentLan", currentLan);
@@ -92,11 +92,11 @@ void set_voice(char* cmd) {  // send some control command directly to the module
     PT(char(SERIAL_VOICE.read()));
   PTL();
   if (!strcmp(cmd, "Ac"))  // enter "XAc" in the serial monitor or add button "X65,99" in the mobile app to enable voice
-                           // reactions 在串口监视器输入指令“XAc”或在手机app创建按键"X65,99"来激活语音动作
+                           // reactions. Enter command "XAc" in the serial monitor or create button "X65,99" in the mobile app to enable voice reactions
     enableVoiceQ = true;
   else if (!strcmp(cmd,
                    "Ad"))  // enter "XAd" in the serial monitor or add button "X65,100" in the mobile app to disable
-                           // voice reactions 在串口监视器输入指令“XAd”或在手机app创建按键"X65,100"来禁用语音动作
+                           // voice reactions. Enter command "XAd" in the serial monitor or create button "X65,100" in the mobile app to disable voice reactions
     enableVoiceQ = false;
 
   printToAllPorts('X');  // the blue read runs on a separate core.
@@ -176,7 +176,7 @@ void read_voice() {
       }
     } else {
       switch (tolower(index)) {
-        case 'a':  // say "Bing-bing" to switch English /说“冰冰”切换英文
+        case 'a':  // say "Bing-bing" to switch English / Say "Bing-bing" to switch to English
         {
           PTLF("Switch English");
           currentLan = 'a';
@@ -189,7 +189,7 @@ void read_voice() {
           }
           break;
         }
-        case 'b':  // say "Di-di" to switch Chinese /说“滴滴”切换中文
+        case 'b':  // say "Di-di" to switch Chinese / Say "Di-di" to switch to Chinese
         {
           PTLF("Switch Chinese");
           currentLan = 'b';
@@ -201,13 +201,13 @@ void read_voice() {
           }
           break;
         }
-        case 'c':  // say "play sound" to enable voice reactions / 说“打开音效”激活语音动作
+        case 'c':  // say "play sound" to enable voice reactions / Say "play sound" to enable voice reactions
         {
           enableVoiceQ = true;
           PTLF("Turn on the audio response");
           break;
         }
-        case 'd':  // say "be quiet" to disable voice reactions / 说“安静点”禁用语音动作
+        case 'd':  // say "be quiet" to disable voice reactions / Say "be quiet" to disable voice reactions
         {
           enableVoiceQ = false;
           PTLF("Turn off the audio response");

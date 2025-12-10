@@ -27,8 +27,5 @@ void loop() {
   }
   // — generate behavior
   reaction();
-
-#ifdef WEB_SERVER
   WebServerLoop();  // Handle asynchronous Web requests
-#endif
 }

@@ -1,20 +1,17 @@
 #include <WebSocketsServer.h>  // download at https://github.com/Links2004/arduinoWebSockets/
 #include <WiFi.h>
 #include "esp32-hal.h"
-#ifdef WIFI_MANAGER
-#include <WiFiManager.h>  // download at https://github.com/tzapu/WiFiManager
-#endif
-#ifndef WIFI_MANAGER
+
 #include <esp_wifi.h>
-#endif
+
 
 #include <ArduinoJson.h>
 #include <map>
 
-// 网页服务器调试级别控制
-#define WEB_DEBUG_LEVEL 1  // 0=关闭, 1=错误, 2=警告, 3=信息, 4=详细
+// Web server debug level control
+#define WEB_DEBUG_LEVEL 1  // 0=off, 1=error, 2=warning, 3=info, 4=verbose
 
-// 调试打印宏 - 根据级别控制
+// Debug print macros - controlled by level
 #if WEB_DEBUG_LEVEL >= 1
 #define WEB_ERROR(msg, value) PTHL(msg, value)
 #define WEB_ERROR_F(msg) PTLF(msg)
@@ -47,27 +44,27 @@
 #define WEB_DEBUG_F(msg)
 #endif
 
-// 网页服务器超时配置 (毫秒) - 针对蓝牙共存优化
-#define HEARTBEAT_TIMEOUT 40000           // 心跳超时：40秒（增加缓冲时间应对BLE干扰）
-#define HEALTH_CHECK_INTERVAL 15000       // 健康检查间隔：15秒（减少检查频率）
-#define WEB_TASK_EXECUTION_TIMEOUT 45000  // 任务执行超时：45秒（增加执行时间）
-#define MAX_CLIENTS 2                     // 最大连接数限制
+// Web server timeout configuration (milliseconds) - optimized for Bluetooth coexistence
+#define HEARTBEAT_TIMEOUT 40000           // Heartbeat timeout: 40 seconds (increased buffer time for BLE interference)
+#define HEALTH_CHECK_INTERVAL 15000       // Health check interval: 15 seconds (reduced check frequency)
+#define WEB_TASK_EXECUTION_TIMEOUT 45000  // Task execution timeout: 45 seconds (increased execution time)
+#define MAX_CLIENTS 2                     // Maximum client connections limit
 
-// WiFi配置
+// WiFi configuration
 String ssid = "";
 String password = "";
-WebSocketsServer webSocket = WebSocketsServer(81);  // WebSocket服务器在81端口
+WebSocketsServer webSocket = WebSocketsServer(81);  // WebSocket server on port 81
 long connectWebTime;
 bool webServerConnected = false;
 
-// WebSocket客户端管理
+// WebSocket client management
 std::map<uint8_t, bool> connectedClients;
-std::map<uint8_t, unsigned long> lastHeartbeat;  // 记录每个客户端的最后心跳时间
+std::map<uint8_t, unsigned long> lastHeartbeat;  // Record last heartbeat time for each client
 
-// 连接健康检查
+// Connection health check
 unsigned long lastHealthCheckTime = 0;
 
-// 异步任务管理
+// Asynchronous task management
 struct WebTask {
   String taskId;
   String status;  // "pending", "running", "completed", "error"
@@ -75,10 +72,10 @@ struct WebTask {
   unsigned long endTime;
   unsigned long startTime;
   bool resultReady;
-  uint8_t clientId;                  // 添加客户端ID
-  std::vector<String> commandGroup;  // 命令组中的命令列表
-  std::vector<String> results;       // 命令组中的执行结果
-  size_t currentCommandIndex;        // 当前执行的命令索引
+  uint8_t clientId;                  // Add client ID
+  std::vector<String> commandGroup;  // List of commands in the command group
+  std::vector<String> results;       // Execution results in the command group
+  size_t currentCommandIndex;        // Current executing command index
 };
 
 std::map<String, WebTask> webTasks;
@@ -96,7 +93,7 @@ void clearWebTask(String taskId);
 void checkConnectionHealth();
 void sendSocketResponse(uint8_t clientId, String message);
 
-// 简单的 Base64 解码函数
+// Simple Base64 decode function
 String base64Decode(String input) {
   const char PROGMEM b64_alphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
   String result = "";
@@ -127,23 +124,23 @@ String base64Decode(String input) {
   return result;
 }
 
-// 生成任务ID
+// Generate task ID
 String generateTaskId() {
   return String(millis()) + "_" + String(esp_random() % 1000);
 }
 
-// 发送响应到指定客户端
+// Send response to specified client
 void sendSocketResponse(uint8_t clientId, String message) {
   if (connectedClients.find(clientId) != connectedClients.end() && connectedClients[clientId]) {
     webSocket.sendTXT(clientId, message);
   }
 }
 
-// 检查连接健康状态
+// Check connection health status
 void checkConnectionHealth() {
   unsigned long currentTime = millis();
 
-  // 检查是否有BLE活动，如果有则放宽心跳超时
+  // Check if there is BLE activity, if so, relax heartbeat timeout
   bool bleActive = false;
 #ifdef BT_CLIENT
   extern boolean doScan;
@@ -153,7 +150,7 @@ void checkConnectionHealth() {
 
   unsigned long effectiveTimeout = bleActive ? (HEARTBEAT_TIMEOUT + 15000) : HEARTBEAT_TIMEOUT;
 
-  // 检查心跳超时
+  // Check heartbeat timeout
   for (auto it = lastHeartbeat.begin(); it != lastHeartbeat.end();) {
     uint8_t clientId = it->first;
     unsigned long lastHeartbeatTime = it->second;
@@ -165,19 +162,19 @@ void checkConnectionHealth() {
         WEB_ERROR("Client heartbeat timeout, disconnecting: ", clientId);
       }
 
-      // 发送超时通知（包含BLE状态信息）
+      // Send timeout notification (including BLE status information)
       String timeoutMsg = bleActive ? "{\"type\":\"error\",\"error\":\"Heartbeat timeout during BLE scan\"}"
                                     : "{\"type\":\"error\",\"error\":\"Heartbeat timeout\"}";
       sendSocketResponse(clientId, timeoutMsg);
 
-      // 断开连接
+      // Disconnect connection
       webSocket.disconnect(clientId);
 
-      // 清理客户端状态
+      // Clean up client state
       connectedClients.erase(clientId);
       it = lastHeartbeat.erase(it);
 
-      // 如果当前任务属于这个客户端，需要处理
+      // If current task belongs to this client, needs handling
       if (webTaskActive && currentWebTaskId != "" && webTasks.find(currentWebTaskId) != webTasks.end() &&
           webTasks[currentWebTaskId].clientId == clientId) {
         errorWebTask("Client disconnected due to heartbeat timeout");
@@ -188,17 +185,17 @@ void checkConnectionHealth() {
   }
 }
 
-// WebSocket事件处理
+// WebSocket event handling
 void handleWebSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length) {
   switch (type) {
     case WStype_DISCONNECTED:
       WEB_ERROR("WebSocket client disconnected: ", num);
 
-      // 清理客户端状态
+      // Clean up client state
       connectedClients.erase(num);
       lastHeartbeat.erase(num);
 
-      // 如果当前任务属于这个客户端，需要处理
+      // If current task belongs to this client, needs handling
       if (webTaskActive && currentWebTaskId != "" && webTasks.find(currentWebTaskId) != webTasks.end() &&
           webTasks[currentWebTaskId].clientId == num) {
         errorWebTask("Client disconnected");
@@ -206,7 +203,7 @@ void handleWebSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t l
       break;
 
     case WStype_CONNECTED:
-      // 检查连接数限制
+      // Check connection limit
       if (connectedClients.size() >= MAX_CLIENTS) {
         WEB_ERROR("Max clients reached, rejecting: ", num);
         sendSocketResponse(num, "{\"type\":\"error\",\"error\":\"Max clients reached\"}");
@@ -218,19 +215,19 @@ void handleWebSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t l
       lastHeartbeat[num] = millis();
       WEB_DEBUG("WebSocket client connected: ", num);
 
-      // 发送连接成功响应
+      // Send connection success response
       sendSocketResponse(num, "{\"type\":\"connected\",\"clientId\":\"" + String(num) + "\"}");
       break;
 
     case WStype_TEXT: {
       String message = String((char*)payload);
 
-      // 解析 JSON 消息
+      // Parse JSON message
       JsonDocument doc;
       DeserializationError error = deserializeJson(doc, message);
 
       if (error) {
-        // JSON 解析错误，发送错误响应
+        // JSON parsing error, send error response
         sendSocketResponse(num, "{\"type\":\"error\",\"error\":\"Invalid JSON format\"}");
         return;
       }
@@ -238,25 +235,25 @@ void handleWebSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t l
       String msgType = doc["type"].as<String>();
       WEB_DEBUG("msg type: ", msgType);
 
-      // 处理心跳消息
+      // Handle heartbeat message
       if (doc["type"] == "heartbeat") {
         lastHeartbeat[num] = millis();
         sendSocketResponse(num, "{\"type\":\"heartbeat\",\"timestamp\":" + String(millis()) + "}");
         return;
       }
 
-      // 处理命令消息（统一使用命令组格式）
+      // Handle command message (uniformly use command group format)
       if (doc["type"] == "command") {
         String taskId = doc["taskId"].as<String>();
         JsonArray commands;
 
-        // 如果是单个命令，转换为命令组格式
+        // If single command, convert to command group format
         commands = doc["commands"].as<JsonArray>();
 
-        // 更新心跳时间
+        // Update heartbeat time
         lastHeartbeat[num] = millis();
 
-        // 创建任务记录
+        // Create task record
         WebTask task;
         task.taskId = taskId;
         task.status = "pending";
@@ -266,10 +263,10 @@ void handleWebSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t l
         task.clientId = num;
         task.currentCommandIndex = 0;
 
-        // 存储命令组
+        // Store command group
         for (JsonVariant cmd : commands) { task.commandGroup.push_back(cmd.as<String>()); }
 
-        // 调试信息
+        // Debug information
         WEB_DEBUG("Received command task: ", taskId);
         WEB_DEBUG("Command count: ", task.commandGroup.size());
 #if WEB_DEBUG_LEVEL >= 4
@@ -278,18 +275,18 @@ void handleWebSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t l
         }
 #endif
 
-        // 如果当前没有活跃的web任务，立即开始执行
+        // If there is no active web task currently, start execution immediately
         if (!webTaskActive) {
-          // 存储任务
+          // Store task
           webTasks[taskId] = task;
           startWebTask(taskId);
         } else {
-          // 如果当前有活跃的web任务，丢弃并返回错误
+          // If there is an active web task currently, discard and return error
           errorWebTask("Previous web task is still running");
           return;
         }
 
-        // 发送任务开始响应
+        // Send task start response
         sendSocketResponse(num, "{\"type\":\"response\",\"taskId\":\"" + taskId + "\",\"status\":\"running\"}");
 
         WEB_DEBUG("web command group async: ", taskId);
@@ -300,25 +297,25 @@ void handleWebSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t l
   }
 }
 
-// 开始执行web任务
+// Start executing web task
 void startWebTask(String taskId) {
   if (webTasks.find(taskId) == webTasks.end()) { return; }
 
   WebTask& task = webTasks[taskId];
 
-  // 设置全局标志和命令
+  // Set global flags and commands
   cmdFromWeb = true;
   currentWebTaskId = taskId;
   webTaskActive = true;
   webResponse = "";  // Clear response buffer
 
-  // 执行命令组中的下一个命令
+  // Execute next command in command group
   if (task.currentCommandIndex < task.commandGroup.size()) {
     String webCmd = task.commandGroup[task.currentCommandIndex];
 
     WEB_DEBUG("Processing command: ", webCmd);
 
-    // 检查是否是base64编码的命令
+    // Check if it's a base64 encoded command
     if (webCmd.startsWith("b64:")) {
       String base64Cmd = webCmd.substring(4);
       String decodedString = base64Decode(base64Cmd);
@@ -339,13 +336,13 @@ void startWebTask(String taskId) {
         WEB_DEBUG("base64 decode args count: ", cmdLen);
       } else {
         WEB_ERROR("base64 decode failed: ", task.currentCommandIndex);
-        // base64 解码失败，跳过这个命令
+        // Base64 decode failed, skip this command
         task.currentCommandIndex++;
         startWebTask(taskId);
         return;
       }
     } else {
-      // 解析命令
+      // Parse command
       token = webCmd[0];
       strcpy(newCmd, webCmd.c_str() + 1);
       cmdLen = strlen(newCmd);
@@ -357,11 +354,11 @@ void startWebTask(String taskId) {
     }
     newCmdIdx = 4;
 
-    // 更新任务状态
+    // Update task status
     task.status = "running";
     task.startTime = millis();
 
-    // 通知客户端任务开始
+    // Notify client that task has started
     JsonDocument statusDoc;
     statusDoc["type"] = "response";
     statusDoc["taskId"] = taskId;
@@ -375,12 +372,12 @@ void startWebTask(String taskId) {
     WEB_DEBUG("sub command: ", webCmd);
     WEB_DEBUG("total commands: ", task.commandGroup.size());
   } else {
-    // 所有命令执行完成
+    // All commands executed
     completeWebTask();
   }
 }
 
-// 完成web任务
+// Complete web task
 void completeWebTask() {
   if (!webTaskActive || currentWebTaskId == "") { return; }
 
@@ -388,15 +385,15 @@ void completeWebTask() {
     WebTask& task = webTasks[currentWebTaskId];
     task.results.push_back(webResponse);
 
-    // 检查是否还有下一个命令
+    // Check if there is a next command
     if (task.currentCommandIndex + 1 < task.commandGroup.size()) {
-      // 还有下一个命令，继续执行
+      // There is a next command, continue execution
       task.currentCommandIndex++;
       startWebTask(currentWebTaskId);
       return;
     }
 
-    // 所有命令执行完成
+    // All commands executed
     task.status = "completed";
     task.endTime = millis();
     task.resultReady = true;
@@ -404,7 +401,7 @@ void completeWebTask() {
     WEB_DEBUG("web task completed: ", currentWebTaskId);
     WEB_DEBUG("results length: ", task.results.size());
 
-    // 发送完成状态给客户端
+    // Send completion status to client
     JsonDocument completeDoc;
     completeDoc["type"] = "response";
     completeDoc["taskId"] = currentWebTaskId;
@@ -427,7 +424,7 @@ void completeWebTask() {
   processNextWebTask();
 }
 
-// Web任务错误处理
+// Web task error handling
 void errorWebTask(String errorMessage) {
   if (!webTaskActive || currentWebTaskId == "") { return; }
 
@@ -436,7 +433,7 @@ void errorWebTask(String errorMessage) {
     task.status = "error";
     task.resultReady = true;
 
-    // 发送错误状态给客户端
+    // Send error status to client
     JsonDocument errorDoc;
     errorDoc["type"] = "response";
     errorDoc["taskId"] = currentWebTaskId;
@@ -467,7 +464,7 @@ void clearWebTask(String taskId) {
   }
 }
 
-// 处理下一个等待的任务
+// Process next waiting task
 void processNextWebTask() {
   for (auto& pair : webTasks) {
     WebTask& task = pair.second;
@@ -478,12 +475,12 @@ void processNextWebTask() {
   }
 }
 
-// WiFi配置函数 - 增强版本，支持重试机制
+// WiFi configuration function - enhanced version, supports retry mechanism
 bool connectWifi(String ssid, String password, int maxRetries = 3) {
   for (int retry = 0; retry < maxRetries; retry++) {
     if (retry > 0) {
       WEB_WARN("WiFi connection retry: ", retry);
-      delay(2000);  // 重试前等待2秒
+      delay(2000);  // Wait 2 seconds before retry
     }
 
     WiFi.begin(ssid.c_str(), password.c_str());
@@ -504,7 +501,7 @@ bool connectWifi(String ssid, String password, int maxRetries = 3) {
       return true;
     } else {
       WEB_ERROR("WiFi connection failed on attempt: ", retry + 1);
-      WiFi.disconnect(true);  // 完全断开连接，为下次尝试做准备
+      WiFi.disconnect(true);  // Completely disconnect, prepare for next attempt
     }
   }
 
@@ -512,14 +509,13 @@ bool connectWifi(String ssid, String password, int maxRetries = 3) {
   return false;
 }
 
-#ifndef WIFI_MANAGER
-// 当未启用WIFI_MANAGER时，尝试读取并使用之前保存的WiFi信息连接
+// When WIFI_MANAGER is not enabled, attempt to read and use previously saved WiFi info to connect
 bool connectWifiFromStoredConfig() {
-  // 检查可用内存
+  // Check available memory
   size_t freeHeap = ESP.getFreeHeap();
   WEB_INFO("Free heap before WiFi init: ", freeHeap);
 
-  if (freeHeap < 50000) {  // 如果可用内存少于50KB
+  if (freeHeap < 50000) {  // If available memory is less than 50KB
     WEB_ERROR("Insufficient memory for WiFi initialization: ", freeHeap);
     return false;
   }
@@ -546,12 +542,12 @@ bool connectWifiFromStoredConfig() {
 
   if (webServerConnected) {
     printToAllPorts("Successfully connected Wifi to IP Address: " + WiFi.localIP().toString());
-    // 启动WebSocket服务器
+    // Start WebSocket server
     webSocket.begin();
     webSocket.onEvent(handleWebSocketEvent);
     WEB_INFO_F("WebSocket server started");
 
-    // 显示连接后的内存状态
+    // Display memory state after connection
     size_t freeHeapAfter = ESP.getFreeHeap();
     WEB_INFO("Free heap after WiFi connection: ", freeHeapAfter);
   } else {
@@ -559,35 +555,6 @@ bool connectWifiFromStoredConfig() {
   }
   return webServerConnected;
 }
-#endif
-
-#ifdef WIFI_MANAGER
-void startWifiManager() {
-  config.putBool("WifiManager", false);
-
-  WiFiManager wm;
-  wm.setConfigPortalTimeout(60);
-  if (!wm.autoConnect((uniqueName + " WifiConfig").c_str())) {
-    WEB_ERROR_F("Fail to connect Wifi. Rebooting.");
-    delay(3000);
-    ESP.restart();
-  } else {
-    webServerConnected = true;
-    printToAllPorts("Successfully connected Wifi to IP Address: " + WiFi.localIP().toString());
-  }
-
-  if (webServerConnected) {
-    // 启动WebSocket服务器
-    webSocket.begin();
-    webSocket.onEvent(handleWebSocketEvent);
-    WEB_INFO_F("WebSocket server started");
-  } else {
-    WEB_ERROR_F("Timeout: Fail to connect web server!");
-  }
-
-  config.putBool("WifiManager", webServerConnected);
-}
-#endif
 
 void resetWifiManager() {
   wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
@@ -602,16 +569,16 @@ void resetWifiManager() {
   ESP.restart();
 }
 
-// 主循环调用函数
+// Main loop function
 void WebServerLoop() {
   if (webServerConnected) {
     webSocket.loop();
 
-    // 监控BLE活动对WebSocket的影响
+    // Monitor BLE activity's impact on WebSocket
     static unsigned long lastBleStatusLog = 0;
     unsigned long currentTime = millis();
 
-    if (currentTime - lastBleStatusLog > 30000) {  // 每30秒记录一次状态
+    if (currentTime - lastBleStatusLog > 30000) {  // Log status every 30 seconds
 #ifdef BT_CLIENT
       extern boolean doScan;
       extern boolean btConnected;
@@ -624,22 +591,22 @@ void WebServerLoop() {
       lastBleStatusLog = currentTime;
     }
 
-    // 定期检查连接健康状态
+    // Regularly check connection health status
     if (currentTime - lastHealthCheckTime > HEALTH_CHECK_INTERVAL) {
       checkConnectionHealth();
       lastHealthCheckTime = currentTime;
     }
 
-    // 检查任务超时
+    // Check task timeout
     for (auto& pair : webTasks) {
       WebTask& task = pair.second;
       if (task.status == "running" && task.startTime > 0) {
-        if (currentTime - task.startTime > WEB_TASK_EXECUTION_TIMEOUT) {  // 使用配置的任务执行超时
+        if (currentTime - task.startTime > WEB_TASK_EXECUTION_TIMEOUT) {  // Use configured task execution timeout
           WEB_ERROR("web task timeout: ", task.taskId);
           task.status = "error";
           task.resultReady = true;
 
-          // 发送超时状态给客户端
+          // Send timeout status to client
           sendSocketResponse(task.clientId,
                              "{\"taskId\":\"" + task.taskId + "\",\"status\":\"error\",\"error\":\"Task timeout\"}");
 
