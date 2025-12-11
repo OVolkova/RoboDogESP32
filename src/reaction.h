@@ -264,7 +264,17 @@ void reaction() {  // Reminder:  reaction() is repeatedly called in the "forever
         printToAllPorts(config.getString("ID"));
         break;
       }
-
+      case T_ROBOMIND_VOICE_HEALTH: {
+        extern bool checkRobomindHealth();  // Defined in robomindVoice.h
+        bool healthStatus = checkRobomindHealth();
+        printToAllPorts(healthStatus ? "Voice module health: OK" : "Voice module health: FAIL");
+        break;
+      }
+      case T_ROBOMIND_VOICE_RANDOM: {
+        extern bool playRandomRobomindVoice();  // Defined in robomindVoice.h
+        playRandomRobomindVoice();
+        break;
+      }
       case T_WIFI_INFO: {
         if (!webServerConnected) {
           PTLF(

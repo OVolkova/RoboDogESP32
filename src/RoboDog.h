@@ -222,6 +222,11 @@ bool newBoard = false;
 #define T_DECELERATE ','
 
 #define T_EXTENSION 'X'
+
+#define T_ROBOMIND_VOICE_HEALTH 'v'
+#define T_ROBOMIND_VOICE_RANDOM 'e'
+
+
 #define EXTENSION_GROVE_SERIAL 'S'  // connect to Grove UART2
 #define EXTENSION_VOICE \
   'A'  // connect to Grove UART2 (on V0_*: a slide switch can choose the voice or the Grove), or UART1 (on V1). Hidden
@@ -407,6 +412,7 @@ int balanceSlope[2] = {1, 1};  // roll, pitch
 #include "skill.h"
 #include "webServer.h"
 
+#include "roboMindVoice.h"
 #include "qualityAssurance.h"
 #include "reaction.h"
 
