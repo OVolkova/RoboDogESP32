@@ -1,8 +1,9 @@
 // modify the model and board definitions
 //***********************
 
-#define VOICE  // Petoi Grove voice module
+// #define VOICE  // Petoi Grove voice module
 #define PIR    // for PIR (Passive Infrared) sensor
+#define ROBOMIND_VOICE  // Enable RoboMind AI voice integration
 
 #include "src/RoboDog.h"
 
@@ -13,6 +14,10 @@ void setup() {
   // Serial1.begin(115200); //second serial port
   while (Serial.available() && Serial.read());  // empty buffer
   initRobot();
+
+  #ifdef ROBOMIND_VOICE
+    robomindVoiceSetup();  // Initialize I2S microphone and speaker
+  #endif
 }
 
 void loop() {
@@ -27,8 +32,5 @@ void loop() {
   }
   // — generate behavior
   reaction();
-
-#ifdef WEB_SERVER
   WebServerLoop();  // Handle asynchronous Web requests
-#endif
 }

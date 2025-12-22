@@ -19,3 +19,19 @@ connection_config*
 petoi_config*
 *.ip
 PetoiWebBlock/communication.pptx
+ 
+# OS generated files
+.idea/
+.DS_Store
+
+
+# Default ignored files
+/shelf/
+/workspace.xml
+# Editor-based HTTP Client requests
+/httpRequests/
+# Datasource local storage ignored files
+/dataSources/
+/dataSources.local.xml
+/testMP3/
+/ESP8266Audio/

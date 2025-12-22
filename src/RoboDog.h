@@ -68,8 +68,6 @@ String uniqueName = "";
   '@'           // Send '!' token to reset the birthmark in the EEPROM so that the robot will know to restart and reset
 #define BT_BLE  // toggle Bluetooth Low Energy (BLE）
 #define BT_SSP  // toggle Bluetooth Secure Simple Pairing (BT_SSP)
-// #define WIFI_MANAGER  // toggle WiFi Manager. It should be always off for now
-#define WEB_SERVER  // toggle web server
 // #define SHOW_FPS // toggle FPS display
 
 #define SERVO_FREQ 240
@@ -224,6 +222,11 @@ bool newBoard = false;
 #define T_DECELERATE ','
 
 #define T_EXTENSION 'X'
+
+#define T_ROBOMIND_VOICE_HEALTH 'v'
+#define T_ROBOMIND_VOICE_RANDOM 'e'
+
+
 #define EXTENSION_GROVE_SERIAL 'S'  // connect to Grove UART2
 #define EXTENSION_VOICE \
   'A'  // connect to Grove UART2 (on V0_*: a slide switch can choose the voice or the Grove), or UART1 (on V1). Hidden
@@ -407,9 +410,9 @@ int balanceSlope[2] = {1, 1};  // roll, pitch
 #include "moduleManager.h"
 #include "motion.h"
 #include "skill.h"
-#ifdef WEB_SERVER
 #include "webServer.h"
-#endif
+
+#include "roboMindVoice.h"
 #include "qualityAssurance.h"
 #include "reaction.h"
 
@@ -434,16 +437,8 @@ void initRobot() {
 
   newBoard = newBoardQ();
   configSetup();
-  PTF("Buzzer volume: ");
-  PT(buzzerVolume);
-  PTL("/10");
-#ifdef WEB_SERVER
-#if defined(WIFI_MANAGER)
-  if (rebootForWifiManagerQ) { startWifiManager(); }
-#else
+
   if (rebootForWifiManagerQ) { connectWifiFromStoredConfig(); }
-#endif
-#endif
 
   if (updateGyroQ) imuSetup();
 
@@ -483,6 +478,5 @@ void initRobot() {
   }
 
   PTL("Ready!");
-  // beep(24, 50);
   idleTimer = millis();
 }

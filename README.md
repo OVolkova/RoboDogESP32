@@ -168,12 +168,6 @@ The firmware includes several configuration options defined in [src/RoboDog.h](s
 - Defined at [src/RoboDog.h:71](src/RoboDog.h#L71)
 - **Default: Enabled**
 
-#### WIFI_MANAGER
-- Toggle WiFi Manager functionality
-- **Currently disabled and should remain off**
-- Defined at [src/RoboDog.h:70](src/RoboDog.h#L70)
-- **Default: Disabled**
-
 #### SHOW_FPS
 - Toggle FPS (Frames Per Second) display
 - Useful for debugging performance

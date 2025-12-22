@@ -168,8 +168,8 @@ void configSetup() {
     char tempStr[12];
     strcpy(tempStr, SoftwareVersion.c_str());
     soundState = 1;
-    buzzerVolume = 5;
-    PTLF("Unmute and set volume to 5/10");
+    buzzerVolume = 1;
+    PTLF("Unmute and set volume to 1/10");
 
     int bufferLen = dataLen(rest[0]);  // save a preset skill to the temp skill
     arrayNCPY(newCmd, rest, bufferLen);

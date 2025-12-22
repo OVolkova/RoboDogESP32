@@ -23,11 +23,11 @@ void printToAllPorts(T text, bool newLine = true) {
 #ifdef BT_SSP
   if (BTconnected) { SerialBT.print(textResponse); }
 #endif
-#ifdef WEB_SERVER
+
   if (cmdFromWeb) {
     if (textResponse != "=") { webResponse += textResponse; }
   }
-#endif
+
   if (moduleActivatedQ[0]) {  // serial2
     Serial2.print(textResponse);
   }

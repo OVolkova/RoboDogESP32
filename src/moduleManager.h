@@ -248,10 +248,8 @@ void readSignal() {
     readBleClient();
   }
 #endif
-// #ifdef WEB_SERVER
 //   if (webServerConnected)
 //     webServer.handleClient();
-// #endif
 #ifdef VOICE
   if (moduleActivatedQ[indexOfModule(EXTENSION_VOICE)]) read_voice();
 #endif
